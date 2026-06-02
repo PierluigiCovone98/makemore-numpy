@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environment
+.venv/
+venv/
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+
+# Project outputs (samples, loss curves, snapshots)
+output/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store

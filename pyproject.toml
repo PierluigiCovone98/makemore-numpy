@@ -1,0 +1,21 @@
+ls [build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rnnumpy"
+version = "0.1.0"
+description = "Char-level language models in pure NumPy with hand-written backward, building up from a bigram to an RNN."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+experiments = ["matplotlib"]
+
+
+# Layout src/: packages live under src/, not in the root directory.
+# "setuptools" look for them there instead of the repo root directory.
+[tool.setuptools.packages.find]
+where = ["src"]
