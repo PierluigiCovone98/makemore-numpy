@@ -1,13 +1,18 @@
 """Count bigrams in the ``data/names.txt`` dataset and plot the corresponding
 matrix in ``output/bigrams_matrix.png`` file.
 """
+from pathlib import Path
 from makemore import bigram
-
 import numpy as np
+
+# Constants
+PROJECT_ROOT = Path(__file__).parent.parent
+DATA_PATH = PROJECT_ROOT / "data" / "names.txt"
+OUTPUT_PATH = PROJECT_ROOT / "output" / "bigrams_matrix.png"
 
 def main():    
     # Let's first read the dataset.
-    dataset = bigram.read_dataset("data/names.txt")
+    dataset = bigram.read_dataset(str(DATA_PATH))
     
     # Create converters
     stoi, itos = bigram.build_vocab(dataset)
@@ -27,7 +32,7 @@ def main():
 
             N[ix1, ix2] += 1
 
-    bigram.pretty_format_bigrams_matrix(N, itos)
+    bigram.pretty_format_bigrams_matrix(N, itos, OUTPUT_PATH)
 
     
 if __name__ == "__main__":
