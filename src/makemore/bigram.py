@@ -73,34 +73,3 @@ def pretty_format_bigrams_matrix(N: np.ndarray, itos: Itos) -> None:
     out_dir = Path("output")
     out_dir.mkdir(exist_ok=True)
     plt.savefig(out_dir / "bigrams_matrix.png")
-
-
-def main():
-    # Let's reproduce what Karpathy does here.
-    
-    # 1. Let's first read the dataset.
-    dataset = read_dataset("data/names.txt")
-    
-    # Create converters
-    stoi, itos = build_vocab(dataset)
-
-    # Prepare the empty matrix
-    N = np.zeros( (len(stoi), len(stoi)), dtype=np.int32 )
-
-    # For each word in the dataset...
-    for word in dataset:
-        # ... create the token
-        bounded_word = BOUNDARY_TOKEN + word + BOUNDARY_TOKEN
-        # And for each bigram...
-        for ch1, ch2 in zip(bounded_word, bounded_word[1:]):
-            # ... convert each char into the corresponding int value.
-            ix1 = stoi[ch1]
-            ix2 = stoi[ch2]
-
-            N[ix1, ix2] += 1
-
-    pretty_format_bigrams_matrix(N, itos)
-
-    
-if __name__ == "__main__":
-    main()
