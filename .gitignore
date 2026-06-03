@@ -20,3 +20,6 @@ output/
 .vscode/
 .idea/
 .DS_Store
+
+# Temporary files
+tmp/
