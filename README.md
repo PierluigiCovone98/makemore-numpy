@@ -1,4 +1,4 @@
-# char-rnn-numpy
+# makemore-numpy
 
 Character-level language models in **pure NumPy**.
 
