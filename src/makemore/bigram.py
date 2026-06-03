@@ -56,7 +56,7 @@ def build_vocab( dataset: list[str] ) -> tuple[Stoi, Itos]:
     return (stoi, itos)
 
 
-def pretty_format_bigrams_matrix(N: np.ndarray, itos: Itos) -> None:
+def pretty_format_bigrams_matrix(N: np.ndarray, itos: Itos, output_path: Path) -> None:
     """Render the bigram count matrix as a heatmap. From Karpathy's makemore 1."""
     plt.figure(figsize=(16, 16))
     plt.imshow(N, cmap='Blues')
@@ -66,10 +66,9 @@ def pretty_format_bigrams_matrix(N: np.ndarray, itos: Itos) -> None:
         for j in range(n):
             chstr = itos[i] + itos[j]
             plt.text(j, i, chstr, ha="center", va="bottom", color="gray")
-            plt.text(j, i, N[i, j].item(), ha="center", va="top", color="gray")  # <-- top
+            plt.text(j, i, N[i, j].item(), ha="center", va="top", color="gray")
 
     plt.axis("off")
 
-    out_dir = Path("output")
-    out_dir.mkdir(exist_ok=True)
-    plt.savefig(out_dir / "bigrams_matrix.png")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_path)
