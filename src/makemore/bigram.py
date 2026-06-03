@@ -16,13 +16,10 @@ type Itos =  dict[int, str]
 BOUNDARY_TOKEN: str = '.'
 
 
-def read_dataset( dataset_path: str ) -> list[str]:
+def read_dataset( dataset_path: Path ) -> list[str]:
     """Read the dataset transforming it in a list of strings."""
 
-    # "Path" is more useful than "OS" (for me)
-    path = Path(dataset_path)
-
-    return path.read_text().splitlines()
+    return dataset_path.read_text().splitlines()
 
 
 def build_vocab( dataset: list[str] ) -> tuple[Stoi, Itos]:

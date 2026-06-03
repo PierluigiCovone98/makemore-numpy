@@ -12,7 +12,7 @@ OUTPUT_PATH = PROJECT_ROOT / "output" / "bigrams_matrix.png"
 
 def main():    
     # Let's first read the dataset.
-    dataset = bigram.read_dataset(str(DATA_PATH))
+    dataset = bigram.read_dataset(DATA_PATH)
     
     # Create converters
     stoi, itos = bigram.build_vocab(dataset)
