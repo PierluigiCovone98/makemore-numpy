@@ -7,12 +7,13 @@ import numpy as np
 
 # Constants
 PROJECT_ROOT = Path(__file__).parent.parent
-DATA_PATH = PROJECT_ROOT / "data" / "names.txt"
-OUTPUT_PATH = PROJECT_ROOT / "output" / "bigrams_matrix.png"
+NAMES_PATH = PROJECT_ROOT / "data" / "names.txt"
+BIGRAM_COUNTS_PATH = PROJECT_ROOT / "output" / "bigram_counts_matrix.png"
+BIGRAM_PROBS_PATH = PROJECT_ROOT / "output" / "bigram_probs_matrix.png"
 
 def main():    
     # Let's first read the dataset.
-    dataset = bigram.read_dataset(DATA_PATH)
+    dataset = bigram.read_dataset(NAMES_PATH)
     
     # Create converters
     stoi, itos = bigram.build_vocab(dataset)
@@ -32,7 +33,11 @@ def main():
 
             N[ix1, ix2] += 1
 
-    bigram.pretty_format_bigrams_matrix(N, itos, OUTPUT_PATH)
+    bigram.save_bigrams_matrix_plot(N, itos, BIGRAM_COUNTS_PATH)
+
+ 
+    P = bigram.to_probability_matrix(N)
+    bigram.save_bigrams_matrix_plot(P, itos, BIGRAM_PROBS_PATH)
 
     
 if __name__ == "__main__":

@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 
 
 # The "TXT" file become a list of strings.
-type Stoi =  dict[str, int]
-type Itos =  dict[int, str]
+type StrToInt =  dict[str, int]
+type IntToStr =  dict[int, str]
 
 
 # Constants
@@ -22,9 +22,9 @@ def read_dataset( dataset_path: Path ) -> list[str]:
     return dataset_path.read_text().splitlines()
 
 
-def build_vocab( dataset: list[str] ) -> tuple[Stoi, Itos]:
+def build_vocab( dataset: list[str] ) -> tuple[StrToInt, IntToStr]:
     """Takes in input the read dataset (list of strings) and returns
-    dictionaries 'stoi' and 'itos', that are required to encode a character to its integer
+    dictionaries 'StrToInt' and 'IntToStr', that are required to encode a character to its integer
     and an integer to the corresponding character, respectively.
     
     In addition to the alphabet retrieved from the dataset, a special token '.' is inserted
@@ -36,36 +36,51 @@ def build_vocab( dataset: list[str] ) -> tuple[Stoi, Itos]:
 
     sorted_alphabet = sorted( set(''.join(dataset)) )
 
-    stoi : Stoi = {}
-    itos : Itos = {}
+    stoi : StrToInt= {}
+    itos : IntToStr = {}
 
-    # I do not expect "len_alphabet" to be high.
     for i, s in enumerate(sorted_alphabet, start=1):
         stoi[s] = i
         itos[i] = s
 
-    # We force the '.' special token to be mapped to '0' (and vice-versa)
-    # such that, when there will be used more characters that comes before 
-    # in the ASCII ordering, our mapping criteria does not work anymore.
+    # We force the '.' special token to be mapped to '0' (and vice-versa) because
+    # without this, if a character appearing before '.' in ASCII ordering were added, 
+    # our mapping would break.
     stoi[BOUNDARY_TOKEN] = 0
     itos[0] = BOUNDARY_TOKEN
 
     return (stoi, itos)
 
 
-def pretty_format_bigrams_matrix(N: np.ndarray, itos: Itos, output_path: Path) -> None:
+def save_bigrams_matrix_plot( N: np.ndarray, itos: IntToStr, output_path: Path ) -> None:
     """Render the bigram count matrix as a heatmap. From Karpathy's makemore 1."""
+    
     plt.figure(figsize=(16, 16))
     plt.imshow(N, cmap='Blues')
+
+    # Different formats for different types of matrices.
+    fmt = "d" if np.issubdtype(N.dtype, np.integer) else ".2f"
 
     n = N.shape[0]
     for i in range(n):
         for j in range(n):
             chstr = itos[i] + itos[j]
             plt.text(j, i, chstr, ha="center", va="bottom", color="gray")
-            plt.text(j, i, N[i, j].item(), ha="center", va="top", color="gray")
+            plt.text(j, i, f"{N[i, j].item():{fmt}}", ha="center", va="top", color="gray")
 
     plt.axis("off")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path)
+
+
+def to_probability_matrix( counts_matrix: np.ndarray ) -> np.ndarray:
+    """Assumes a non-negative count matrix.
+    From that, computes and returns the relative matrix of probabilities.
+    """
+
+    # Sum the "count_matrix" over axis one means: 
+    #   "I want that for each column j, you sum all elements of the i-th row".
+    # The "keepdims=True" avoids that the resulting vector has one dimension
+    # less (this is important when broadcasting is performed).
+    return counts_matrix / counts_matrix.sum( axis=1, keepdims=True )

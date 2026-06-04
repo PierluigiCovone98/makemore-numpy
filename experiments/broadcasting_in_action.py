@@ -3,10 +3,7 @@
 
 import numpy as np
 
-
 def main():
-
-    # === Experiment Section ===
     
     # === It's completely random matrix (but easy to manage by hand).
     M = np.arange(12).reshape(4,3)
@@ -27,7 +24,6 @@ def main():
 
     #   Returns the sum of all element in the matrix.
     M_sum = M.sum()
-
 
     '''
     So, what does it meas:
@@ -56,6 +52,7 @@ def main():
             of the new columnv ector, is the sum of the i-th element of each 
             j-th column.
     '''
+
     M_sum_by_columns = M.sum(axis=0)
     M_sum_by_rows = M.sum(axis=1)
     
@@ -68,8 +65,6 @@ def main():
 
     M_sum_by_columns = M.sum(axis=0)
     M_sum_by_rows = M.sum(axis=1)
-
-    # === Printing Section ====
     
     # === Matrix infos
     print(f"M = {M}\n")
@@ -81,7 +76,6 @@ def main():
     print(f"\tM.sum(axis=0) [sum-by-column]   = {M_sum_by_columns}")
     print(f"\tM.sum(axis=1) [sum-by-rows]     = {M_sum_by_rows}\n")
 
-
     '''
     Notice that, without specify the argument "keepdim=True", even the "column vector"
     become a simple vector. And I do not want it.
@@ -92,7 +86,6 @@ def main():
     print("With \"keepdim=True\":")
     print(f"\tM.sum(axis=0) [sum-by-column]   = {M_sum_by_columns}")
     print(f"\tM.sum(axis=1) [sum-by-rows]     = \n{M_sum_by_rows}\n")
-
 
     '''
     Why I do not want to lose the "column vector"?
@@ -106,10 +99,10 @@ def main():
     M2 = M_sum_by_columns
 
     MxM1 = M*M1
-    print(f"M x M1  =\n{MxM1}\n")        # Expected = [ [0, 3, 6], [36, 48, 60], [...], [270, 300, 330] ]
+    print(f"M x M1  =\n{MxM1}\n")   # Expected = [ [0, 3, 6], [36, 48, 60], [...], [270, 300, 330] ]
 
     MxM2 = M*M2
-    print(f"M x M2  =\n{MxM2}")        # Expected = [ [0, 22, 52], [54, 88, 150], [...], [162, 220, 286] ]
+    print(f"M x M2  =\n{MxM2}")     # Expected = [ [0, 22, 52], [54, 88, 150], [...], [162, 220, 286] ]
 
 
 if __name__ == '__main__':
