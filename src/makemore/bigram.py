@@ -15,9 +15,9 @@ type IntToStr =  dict[int, str]
 # Constants
 BOUNDARY_TOKEN: str = '.'
 # To avoid the presence of bigrams probabilities values equals to zero,
-# we use a value ``EPSILON`` (that become a hyperparameter of the model) 
+# we use a value ``SMOOTHING`` (that become a hyperparameter of the model) 
 # such that no bigrams have the count at zero.
-EPSILON: int = 1
+SMOOTHING: int = 1
 
 
 def read_dataset( dataset_path: Path ) -> list[str]:
@@ -87,7 +87,9 @@ def to_probability_matrix( counts_matrix: np.ndarray ) -> np.ndarray:
     # It's perfomed the "smoothing" of the bigrams counts matrix such that 
     # no more counts equals to zero, are present (and so: there are no zero
     # probabilities). 
-    return ( counts_matrix + EPSILON ) / counts_matrix.sum( axis=1, keepdims=True )
+
+    smoothed = counts_matrix + SMOOTHING 
+    return smoothed / smoothed.sum( axis=1, keepdims=True )
 
 
 def sample( P: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str:
@@ -134,7 +136,26 @@ def sample( P: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str:
         out.append( itos[j] )
         
         i = j
-        
+
+    
+def mean_nll( dataset: list[str], stoi: StrToInt, P: np.ndarray ) -> float:
+    """Compute the mean negative log likelihood of the bigram language model."""
+
+    nll: float = 0.0
+    n_bigrams: int = 0
+
+    for word in dataset:
+        bounded_word = BOUNDARY_TOKEN + word + BOUNDARY_TOKEN
+        for ch1, ch2 in zip(bounded_word, bounded_word[1:]):
+            # Take the "observed" bigram (ch1, ch2);
+            # extract the model probability of it;
+            # compute the neg log;
+            # add to the nll total value.  
+            nll += -np.log( P[stoi[ch1], stoi[ch2]] )
+            n_bigrams += 1
+
+    return nll/n_bigrams
+
 
 # === RENDERING ===
 def save_bigrams_matrix_plot( N: np.ndarray, itos: IntToStr, output_path: Path ) -> None:
