@@ -84,3 +84,49 @@ def to_probability_matrix( counts_matrix: np.ndarray ) -> np.ndarray:
     # The "keepdims=True" avoids that the resulting vector has one dimension
     # less (this is important when broadcasting is performed).
     return counts_matrix / counts_matrix.sum( axis=1, keepdims=True )
+
+
+def sample( P: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str:
+    """Sample a new word from the bigrams probabilities matrix.
+    
+    Inputs
+    ------
+        P : The bigrams probabilities matrix. We use it by rows. 
+
+        itos : The map between integers and corresponding strings.
+
+    Returns
+    -------
+        The sample retrieved from the sampling operation.
+    """
+
+    out : list[str] = [] 
+
+    i : int = 0
+    while True:
+        
+        # Using "mltinomial" because we want to get a character following 
+        # the probability distribution of the i-th row.
+        # 
+        # Notice that the "np.random.multinomial()" function returns an array
+        # that has the same dimension of the given "pvals", and each dimension
+        # has the same size of the original one.
+        #
+        # What "multinomial" does is:
+        #   Ok, you specify how many time you want me to perform the experiment
+        #   (exactly n-times) and I will tell you how frequent each result occurs.
+        # How frequent results occur shold roughly match the given distribution of
+        # probabilities. 
+        #
+        # Because we're intrested in one repetition of the experiment, we need a way
+        # to "extract" the only outcome that occurred. To do that, we use "np.argmax()".
+        j = np.argmax( rng.multinomial(n=1, pvals=P[i]) ).item() 
+        
+        # If the next character is the boundary token, then return (without add it)
+        if j == 0:
+            return ''.join(out)
+
+
+        out.append( itos[j] )
+        
+        i = j
