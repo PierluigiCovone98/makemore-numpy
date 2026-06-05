@@ -52,26 +52,21 @@ def build_vocab( dataset: list[str] ) -> tuple[StrToInt, IntToStr]:
     return (stoi, itos)
 
 
-def save_bigrams_matrix_plot( N: np.ndarray, itos: IntToStr, output_path: Path ) -> None:
-    """Render the bigram count matrix as a heatmap. From Karpathy's makemore 1."""
-    
-    plt.figure(figsize=(16, 16))
-    plt.imshow(N, cmap='Blues')
+def count_bigrams( dataset: list[str], stoi: StrToInt ) -> np.ndarray:
+    """For a given dataset, returns the bigrams counts matrix."""
 
-    # Different formats for different types of matrices.
-    fmt = "d" if np.issubdtype(N.dtype, np.integer) else ".2f"
+    # Prepare the empty matrix
+    N = np.zeros( (len(stoi), len(stoi)), dtype=np.int32 )
 
-    n = N.shape[0]
-    for i in range(n):
-        for j in range(n):
-            chstr = itos[i] + itos[j]
-            plt.text(j, i, chstr, ha="center", va="bottom", color="gray")
-            plt.text(j, i, f"{N[i, j].item():{fmt}}", ha="center", va="top", color="gray")
+    # For each word in the dataset...
+    for word in dataset:
+        # ... create the token
+        bounded_word = BOUNDARY_TOKEN + word + BOUNDARY_TOKEN
+        # And for each bigram update its counter.
+        for ch1, ch2 in zip(bounded_word, bounded_word[1:]):
+            N[ stoi[ch1], stoi[ch2] ] += 1
 
-    plt.axis("off")
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path)
+    return N
 
 
 def to_probability_matrix( counts_matrix: np.ndarray ) -> np.ndarray:
@@ -105,7 +100,7 @@ def sample( P: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str:
     i : int = 0
     while True:
         
-        # Using "mltinomial" because we want to get a character following 
+        # Using "multinomial" because we want to get a character following 
         # the probability distribution of the i-th row.
         # 
         # Notice that the "np.random.multinomial()" function returns an array
@@ -115,10 +110,10 @@ def sample( P: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str:
         # What "multinomial" does is:
         #   Ok, you specify how many time you want me to perform the experiment
         #   (exactly n-times) and I will tell you how frequent each result occurs.
-        # How frequent results occur shold roughly match the given distribution of
+        # How frequent results occur shuld roughly match the given distribution of
         # probabilities. 
         #
-        # Because we're intrested in one repetition of the experiment, we need a way
+        # Because we're interested in one repetition of the experiment, we need a way
         # to "extract" the only outcome that occurred. To do that, we use "np.argmax()".
         j = np.argmax( rng.multinomial(n=1, pvals=P[i]) ).item() 
         
@@ -130,3 +125,26 @@ def sample( P: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str:
         out.append( itos[j] )
         
         i = j
+        
+
+# === RENDERING ===
+def save_bigrams_matrix_plot( N: np.ndarray, itos: IntToStr, output_path: Path ) -> None:
+    """Render the bigram count matrix as a heatmap. From Karpathy's makemore 1."""
+    
+    plt.figure(figsize=(16, 16))
+    plt.imshow(N, cmap='Blues')
+
+    # Different formats for different types of matrices.
+    fmt = "d" if np.issubdtype(N.dtype, np.integer) else ".2f"
+
+    n = N.shape[0]
+    for i in range(n):
+        for j in range(n):
+            chstr = itos[i] + itos[j]
+            plt.text(j, i, chstr, ha="center", va="bottom", color="gray")
+            plt.text(j, i, f"{N[i, j].item():{fmt}}", ha="center", va="top", color="gray")
+
+    plt.axis("off")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_path)
