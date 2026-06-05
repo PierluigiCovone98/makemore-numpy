@@ -14,6 +14,10 @@ type IntToStr =  dict[int, str]
 
 # Constants
 BOUNDARY_TOKEN: str = '.'
+# To avoid the presence of bigrams probabilities values equals to zero,
+# we use a value ``EPSILON`` (that become a hyperparameter of the model) 
+# such that no bigrams have the count at zero.
+EPSILON: int = 1
 
 
 def read_dataset( dataset_path: Path ) -> list[str]:
@@ -74,11 +78,16 @@ def to_probability_matrix( counts_matrix: np.ndarray ) -> np.ndarray:
     From that, computes and returns the relative matrix of probabilities.
     """
 
-    # Sum the "count_matrix" over axis one means: 
-    #   "I want that for each column j, you sum all elements of the i-th row".
+    # Sum the "count_matrix" over "axis one" means: 
+    #   "I want that, for each column j, you sum all elements of the i-th row".
+    #
     # The "keepdims=True" avoids that the resulting vector has one dimension
     # less (this is important when broadcasting is performed).
-    return counts_matrix / counts_matrix.sum( axis=1, keepdims=True )
+    #
+    # It's perfomed the "smoothing" of the bigrams counts matrix such that 
+    # no more counts equals to zero, are present (and so: there are no zero
+    # probabilities). 
+    return ( counts_matrix + EPSILON ) / counts_matrix.sum( axis=1, keepdims=True )
 
 
 def sample( P: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str:
@@ -131,11 +140,11 @@ def sample( P: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str:
 def save_bigrams_matrix_plot( N: np.ndarray, itos: IntToStr, output_path: Path ) -> None:
     """Render the bigram count matrix as a heatmap. From Karpathy's makemore 1."""
     
-    plt.figure(figsize=(16, 16))
+    plt.figure(figsize=(20, 20))
     plt.imshow(N, cmap='Blues')
 
     # Different formats for different types of matrices.
-    fmt = "d" if np.issubdtype(N.dtype, np.integer) else ".2f"
+    fmt = "d" if np.issubdtype(N.dtype, np.integer) else ".4f"
 
     n = N.shape[0]
     for i in range(n):
