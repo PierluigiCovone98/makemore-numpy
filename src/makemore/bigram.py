@@ -2,6 +2,7 @@
 Text files are assumed to be "one word per line".
 """
 from pathlib import Path
+from collections.abc import Iterator
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -56,19 +57,23 @@ def build_vocab( dataset: list[str] ) -> tuple[StrToInt, IntToStr]:
     return (stoi, itos)
 
 
+def iter_bigrams( dataset: list[str], stoi: StrToInt) -> Iterator[ tuple[int, int] ]:
+    """Yield (ix1, ix2) for every bigram in the boundary-padded dataset."""
+    
+    for word in dataset:
+        bounded_word = BOUNDARY_TOKEN + word + BOUNDARY_TOKEN
+        for ch1, ch2 in zip(bounded_word, bounded_word[1:]):
+            yield ( stoi[ch1], stoi[ch2] )
+
+
 def count_bigrams( dataset: list[str], stoi: StrToInt ) -> np.ndarray:
     """For a given dataset, returns the bigrams counts matrix."""
 
     # Prepare the empty matrix
     N = np.zeros( (len(stoi), len(stoi)), dtype=np.int32 )
-
-    # For each word in the dataset...
-    for word in dataset:
-        # ... create the token
-        bounded_word = BOUNDARY_TOKEN + word + BOUNDARY_TOKEN
-        # And for each bigram update its counter.
-        for ch1, ch2 in zip(bounded_word, bounded_word[1:]):
-            N[ stoi[ch1], stoi[ch2] ] += 1
+    
+    for ix1, ix2 in iter_bigrams(dataset, stoi):
+        N[ ix1, ix2 ] += 1
 
     return N
 
@@ -144,17 +149,23 @@ def mean_nll( dataset: list[str], stoi: StrToInt, P: np.ndarray ) -> float:
     nll: float = 0.0
     n_bigrams: int = 0
 
-    for word in dataset:
-        bounded_word = BOUNDARY_TOKEN + word + BOUNDARY_TOKEN
-        for ch1, ch2 in zip(bounded_word, bounded_word[1:]):
-            # Take the "observed" bigram (ch1, ch2);
-            # extract the model probability of it;
-            # compute the neg log;
-            # add to the nll total value.  
-            nll += -np.log( P[stoi[ch1], stoi[ch2]] )
-            n_bigrams += 1
+    for ix1, ix2 in iter_bigrams(dataset, stoi):
+        nll += -np.log( P[ix1, ix2] )
+        n_bigrams += 1
 
     return nll/n_bigrams
+
+
+def build_training_set(dataset: list[str], stoi: StrToInt) -> tuple[np.ndarray, np.ndarray]:
+    """Build (xs, ys) parallel arrays of bigram indices from the dataset."""
+
+    xs, ys = [], []
+
+    for ix1, ix2 in iter_bigrams(dataset, stoi):
+        xs.append(ix1)
+        ys.append(ix2)
+
+    return ( np.array(xs, dtype=np.int32), np.array(ys,  dtype=np.int32) )
 
 
 # === RENDERING ===
