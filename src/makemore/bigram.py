@@ -168,6 +168,20 @@ def build_training_set(dataset: list[str], stoi: StrToInt) -> tuple[np.ndarray, 
     return ( np.array(xs, dtype=np.int32), np.array(ys,  dtype=np.int32) )
 
 
+def one_hot( indices: np.ndarray, num_classes: int ) -> np.ndarray:
+    """Convert a vector of indices (input vector) into a matrix where each row 
+    is an input encoded as one-hot vector.
+    """
+     
+    # It is more efficient to allocate the final numpy array once
+    output = np.zeros( (indices.size, num_classes), dtype=np.float32 )
+    
+    for i, ix in enumerate(indices):
+        output[i, ix] = 1
+
+    return output
+
+
 # === RENDERING ===
 def save_bigrams_matrix_plot( N: np.ndarray, itos: IntToStr, output_path: Path ) -> None:
     """Render the bigram count matrix as a heatmap. From Karpathy's makemore 1."""
