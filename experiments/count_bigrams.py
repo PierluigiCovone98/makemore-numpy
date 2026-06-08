@@ -2,7 +2,8 @@
 matrix in ``output/bigrams_matrix.png`` file.
 """
 from pathlib import Path
-from makemore import bigram
+from makemore import counting, data
+
 import numpy as np
 
 # Constants
@@ -14,20 +15,20 @@ BIGRAM_PROBS_PATH = PROJECT_ROOT / "output" / "bigram_probs_matrix.png"
 def main():    
       
     # 1. Read the dataset
-    dataset = bigram.read_dataset(NAMES_PATH)
+    dataset = data.read_dataset(NAMES_PATH)
     
     # 2. Create the alphabet
-    stoi, itos = bigram.build_vocab(dataset)
+    stoi, itos = data.build_vocab(dataset)
 
     # 3. Create the bigrams counts matrix
-    N = bigram.count_bigrams(dataset, stoi)
+    N = counting.count_bigrams(dataset, stoi)
 
     # 4. Transform it to a probabilities matrix 
-    P = bigram.to_probability_matrix(N)
+    P = counting.to_probability_matrix(N)
 
     # 5. Save both matrices
-    bigram.save_bigrams_matrix_plot(N, itos, BIGRAM_COUNTS_PATH)
-    bigram.save_bigrams_matrix_plot(P, itos, BIGRAM_PROBS_PATH)
+    counting.save_bigrams_matrix_plot(N, itos, BIGRAM_COUNTS_PATH)
+    counting.save_bigrams_matrix_plot(P, itos, BIGRAM_PROBS_PATH)
 
 
 if __name__ == "__main__":
