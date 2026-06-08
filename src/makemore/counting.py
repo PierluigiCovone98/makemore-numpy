@@ -1,4 +1,4 @@
-"""Character-Level language model that process and generate text one character at time (autoregressive).
+"""Counting-based (frequentist) bigram model: estimate probabilities directly from observed bigram counts.
 Text files are assumed to be "one word per line".
 """
 import numpy as np

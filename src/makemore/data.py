@@ -1,7 +1,7 @@
 """Collection of functions for ``data preparation`` for the problem of 
 predicting the next character in a sequence (bigram problem). 
 In particular:
-    dataset loading, vocabulary building, bigram extraxtion and one-hot encoding.
+    dataset loading, vocabulary building, bigram extraction and one-hot encoding.
 
 Functions implemented here are used by more than one single approach (by the counting 
 and the neural models).
@@ -32,11 +32,11 @@ def build_vocab( dataset: list[str] ) -> tuple[StrToInt, IntToStr]:
     In addition to the alphabet of the dataset, it is inserted into the vocab
     a special token ``.`` too, that bounds a word into a pair of dots.
 
-    The used convention is to manually map the ``boundary toke`` such that
+    The used convention is to manually map the ``boundary token`` such that
     it is always mapped to the ``0`` integer.
 
     The first element of the returned tuple is the String-To-Integer mapping;
-    the second one is the Integer-To-String mappping.
+    the second one is the Integer-To-String mapping.
     """
     alphabet = sorted( set( ''.join(dataset) ) )
 
@@ -72,7 +72,7 @@ def iter_bigrams( dataset: list[str], stoi: StrToInt ) -> Iterator[ tuple[int, i
 
 
 def build_training_set( dataset: list[str], stoi: StrToInt ) -> tuple[np.ndarray, np.ndarray]:
-    """For a given dataset, returns the training set for the "next character prediction problem.
+    """For a given dataset, returns the training set for the "next character prediction problem“.
     
     The training set is composed by the ``inputs vector`` and the ``targets vector``:
     both are vectors of integers representing the index of a specific character, 
