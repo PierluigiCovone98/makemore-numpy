@@ -9,7 +9,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 NAMES_PATH = PROJECT_ROOT / "data" / "names.txt"
 
 NUM_SAMPLES = 10
-SEED = 42
+SEED = 2147483647
 
 def main():
 
