@@ -45,3 +45,16 @@ def softmax( logits: np.ndarray ) -> np.ndarray:
 def mean_nll( probs: np.ndarray, ys: np.ndarray ) -> float:
     """Compute the mean negative log likelihood."""
     return - np.mean( np.log( probs[ np.arange(ys.size), ys ] ) ).item()
+
+
+def backward( probs: np.ndarray, ys: np.ndarray ) -> np.ndarray:
+    """ [...] """
+
+    # --- d(loss) / d(probs) ---
+    dprobs = np.zeros( shape=probs.shape, dtype=np.float32 )
+    
+    ys_len = len(ys)
+    for k, yk in enumerate(ys):
+        dprobs[k, yk] = - (1 / ys_len) * (1 / probs[k,yk])
+
+    return dprobs

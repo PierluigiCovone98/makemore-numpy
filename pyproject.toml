@@ -13,6 +13,7 @@ dependencies = [
 
 [project.optional-dependencies]
 experiments = ["matplotlib"]
+dev = ["pytest"]
 
 
 # Layout src/: packages live under src/, not in the root directory.
