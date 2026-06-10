@@ -5,6 +5,8 @@ Same task as the counting model, learned instead of counted.
 """
 import numpy as np
 
+from makemore import data
+
 
 def build_layer( n_inputs: int, n_outs: int, rng: np.random.Generator) -> np.ndarray:
     """Build a neural net linear layer with ``n_outs`` neurons where each neuron has ``n_inputs`` weights.
@@ -47,14 +49,38 @@ def mean_nll( probs: np.ndarray, ys: np.ndarray ) -> float:
     return - np.mean( np.log( probs[ np.arange(ys.size), ys ] ) ).item()
 
 
-def backward( probs: np.ndarray, ys: np.ndarray ) -> np.ndarray:
+def backward( probs: np.ndarray, ys: np.ndarray, alphabet_len: int ) -> np.ndarray:
     """ [...] """
 
     # --- d(loss) / d(probs) ---
-    dprobs = np.zeros( shape=probs.shape, dtype=np.float32 )
+    dprobs = d_loss_d_probs(probs, ys)
+
+    # --- d(loss)/ d(logits) ---
+    dlogits = d_loss_d_logits(probs, ys, alphabet_len)
+
+    return dlogits
+
+
+# === Track the process ===
+
+def d_loss_d_probs( probs: np.ndarray, ys: np.ndarray) -> np.ndarray:
+    """Manually compute the d(loss)/d(probs) derivative."""
+    dprobs = np.zeros( shape=probs.shape )
     
-    ys_len = len(ys)
+    # k     :=  refers to the k-th experiment (oberved bigram) 
+    # yk    :=  refers to the target of the k-th experiment
     for k, yk in enumerate(ys):
-        dprobs[k, yk] = - (1 / ys_len) * (1 / probs[k,yk])
+        # N :=  len(ys)     (Number of experiments)
+        dprobs[k, yk] = - (1 / len(ys)) * (1 / probs[k,yk])
 
     return dprobs
+
+
+def d_loss_d_logits( probs: np.ndarray, ys: np.ndarray, alphabet_len: int) -> np.ndarray:
+    """ [...] """
+    # Following the documentation, it is easly computed as:
+    yenc = data.one_hot(ys, alphabet_len)
+    N = len(ys)
+    dlogits = (probs - yenc) / N
+
+    return dlogits
