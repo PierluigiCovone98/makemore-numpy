@@ -20,12 +20,14 @@ EPSILON = 1e-5
 
 
 @pytest.fixture
-def forward_setup() -> tuple[np.ndarray, np.ndarray, int, np.ndarray]:
-    """Run one full forward pass on a tiny fixed dataset, shared by the gradient checks.
+def forward_setup() -> tuple[np.ndarray, np.ndarray, int, np.ndarray, np.ndarray, np.ndarray]:
+   """Run one full forward pass on a tiny fixed dataset, shared by the gradient checks.
 
-    Returns (probs, ys, alphabet_len, logits), where ``probs`` and ``logits`` are in float64 
-    so that finite-difference perturbations aren't swamped by float32 rounding noise. 
-    pytest re-runs this per test, so each check starts from a clean, unperturbed copy.
+    Returns (probs, ys, alphabet_len, logits, xenc, W). W is cast to float64
+    right after initialization, so every downstream quantity (logits, probs)
+    inherits the precision: finite-difference perturbations would be swamped
+    by float32 rounding noise. pytest re-runs this per test, so each check
+    starts from a clean, unperturbed copy.
     """
     # --- Arrange: prepare the situation ---
 
@@ -38,14 +40,14 @@ def forward_setup() -> tuple[np.ndarray, np.ndarray, int, np.ndarray]:
     alphabet_len = len(stoi)
     xenc = data.one_hot(xs, num_classes=alphabet_len)
     rng = np.random.default_rng(SEED)
-    W = neural.build_layer(alphabet_len, alphabet_len, rng)
+    W = neural.build_layer(alphabet_len, alphabet_len, rng).astype( np.float64 )
 
     # 3. Forward Pass.
     logits = neural.linear_forward(xenc, W).astype( np.float64 )
     probs = neural.softmax(logits).astype( np.float64 )
     loss = neural.mean_nll(probs, ys)
 
-    return probs, ys, alphabet_len, logits
+    return probs, ys, alphabet_len, logits, xenc, W
 
 
 def test_dprobs_matches_numerical_gradient(forward_setup):
@@ -55,7 +57,7 @@ def test_dprobs_matches_numerical_gradient(forward_setup):
     and compares the numerical slope with the analytic gradient from 
     d_loss_d_probs function.
     """
-    probs, ys, _, _ = forward_setup 
+    probs, ys, _, _, _, _= forward_setup 
 
     # --- Act: exectute what you wanna test ---
     dprobs_analytic = neural.d_loss_d_probs(probs, ys).astype( np.float64 )
@@ -95,7 +97,7 @@ def test_dlogits_matches_numerical_gradient(forward_setup):
     comparing the numerical slope with the analytic (probs - onehot)/N,
     from d_loss_d_logits function.
     """
-    probs, ys, alphabet_len, logits = forward_setup 
+    probs, ys, alphabet_len, logits, _, _ = forward_setup 
 
     # --- Act: exectute what you wanna test ---
     dlogits_analytic = neural.d_loss_d_logits(probs, ys, alphabet_len).astype( np.float64 )
@@ -121,7 +123,7 @@ def test_dlogits_matches_numerical_gradient(forward_setup):
             dlogits_numeric[i, j] = ( loss_plus - loss_minus ) / (2 * EPSILON)
     
     # Use the "-s" option to print
-    print("[Test 1] dlogits")
+    print("[Test 2] dlogits")
     print("- dlogits_analytic:")
     print(dlogits_analytic)
     print("- dlogits_numeric:")
@@ -129,3 +131,50 @@ def test_dlogits_matches_numerical_gradient(forward_setup):
     print()
 
     assert np.allclose(dlogits_analytic, dlogits_numeric, atol=1e-6)
+
+
+def test_dW_matches_numerical_gradient(forward_setup):
+    """Check dL/dW against central finite differences.
+
+    Perturbs each W[i,j] by +-epsilon and re-runs the whole forward pass
+    (linear forward, softmax, nll), since a weight change propagates through
+    every downstream quantity. Compares the numerical slope with the analytic
+    xenc.T @ dlogits, from the d_loss_d_w function.
+    """
+    probs, ys, alphabet_len, logits, xenc, W = forward_setup 
+
+    # --- Act: exectute what you wanna test ---
+    dlogits = neural.d_loss_d_logits(probs, ys, alphabet_len).astype( np.float64 )
+    dW_analytic = neural.d_loss_d_w(xenc, dlogits).astype( np.float64 )
+
+    # --- Assert: verify if works ---
+    dW_numeric = np.zeros( W.shape, dtype=np.float64 )
+    for i in range( W.shape[0] ):
+        for j in range( W.shape[1] ):
+            
+            original_weight = W[i, j]
+
+            W[i, j] = original_weight + EPSILON
+            logits_plus = neural.linear_forward(xenc, W)
+            probs_plus = neural.softmax(logits_plus)
+            loss_plus = neural.mean_nll(probs_plus, ys)
+
+            W[i, j] = original_weight - EPSILON
+            logits_minus = neural.linear_forward(xenc, W)
+            probs_minus = neural.softmax(logits_minus)
+            loss_minus = neural.mean_nll(probs_minus, ys)
+
+    
+            W[i, j] = original_weight
+            
+            dW_numeric[i, j] = ( loss_plus - loss_minus ) / (2 * EPSILON)
+    
+    # Use the "-s" option to print
+    print("[Test 3] dW")
+    print("- dW_analytic:")
+    print(dW_analytic)
+    print("- dW_numeric:")
+    print(dW_numeric)
+    print()
+
+    assert np.allclose(dW_analytic, dW_numeric, atol=1e-6)

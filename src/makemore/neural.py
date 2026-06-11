@@ -49,16 +49,19 @@ def mean_nll( probs: np.ndarray, ys: np.ndarray ) -> float:
     return - np.mean( np.log( probs[ np.arange(ys.size), ys ] ) ).item()
 
 
-def backward( probs: np.ndarray, ys: np.ndarray, alphabet_len: int ) -> np.ndarray:
+def backward( probs: np.ndarray, ys: np.ndarray, alphabet_len: int, xenc: np.ndarray) -> np.ndarray:
     """ [...] """
 
     # --- d(loss) / d(probs) ---
     dprobs = d_loss_d_probs(probs, ys)
 
-    # --- d(loss)/ d(logits) ---
+    # --- d(loss) / d(logits) ---
     dlogits = d_loss_d_logits(probs, ys, alphabet_len)
 
-    return dlogits
+    # --- d(loss) / d(W)
+    dW = d_loss_d_w(xenc, dlogits)
+
+    return dW
 
 
 # === Track the process ===
@@ -84,3 +87,8 @@ def d_loss_d_logits( probs: np.ndarray, ys: np.ndarray, alphabet_len: int) -> np
     dlogits = (probs - yenc) / N
 
     return dlogits
+
+
+def d_loss_d_w( xenc: np.ndarray, dlogits: np.ndarray, ) -> np.ndarray:
+    """ [...] """
+    return xenc.T @ dlogits
