@@ -20,7 +20,7 @@ def build_layer( n_inputs: int, n_outs: int, rng: np.random.Generator) -> np.nda
 
 
 def linear_forward( xenc: np.ndarray, W: np.ndarray) -> np.ndarray:
-    """Compute the matrix multiplication between the ``inputs vector`` and a nerual net layer ``W``.
+    """Compute the matrix multiplication between the ``inputs vector`` and a neural net layer ``W``.
 
     Assumes that neurons in the layer ``W`` are composed only by weights.  
     """
@@ -36,8 +36,9 @@ def softmax( logits: np.ndarray ) -> np.ndarray:
         -   and dividing by the row sum normalizes each row to sum to 1.
     Applied row-wise, so each row becomes the next-character distribution for one input.
     
-    For tecnichal constraints we from each logit the max value of the row in which it 
-    is located. This ensures that the exponentiation does not overflow.
+    For numerical stability we subtract from each logit the max value of its row: 
+    this keeps the exponentiation from overflowing, and leaves the result unchanged 
+    (softmax is shift-invariant).
     """
     logits = logits - logits.max(axis=1, keepdims=True)
     counts = np.exp(logits)
@@ -50,10 +51,20 @@ def mean_nll( probs: np.ndarray, ys: np.ndarray ) -> float:
 
 
 def backward( probs: np.ndarray, ys: np.ndarray, alphabet_len: int, xenc: np.ndarray) -> np.ndarray:
-    """ [...] """
+    """Run the full backward pass and return dW, the gradient of the loss
+    with respect to the weights.
+
+    Walks the forward pipeline in reverse, one link at a time; each step
+    consumes the previous one. See ``docs/backpropagation_by_hand.pdf`` for
+    the full derivation.
+    """
 
     # --- d(loss) / d(probs) ---
-    dprobs = d_loss_d_probs(probs, ys)
+    # Not computed: it cancels into ``dlogits`` during the derivation
+    # (see docs/backpropagation_by_hand.pdf). d_loss_d_probs is kept
+    # below only as a documented step, exercised by its own test.
+    # 
+    # dprobs = d_loss_d_probs(probs, ys)
 
     # --- d(loss) / d(logits) ---
     dlogits = d_loss_d_logits(probs, ys, alphabet_len)
@@ -67,10 +78,15 @@ def backward( probs: np.ndarray, ys: np.ndarray, alphabet_len: int, xenc: np.nda
 # === Track the process ===
 
 def d_loss_d_probs( probs: np.ndarray, ys: np.ndarray) -> np.ndarray:
-    """Manually compute the d(loss)/d(probs) derivative."""
+    """Compute d(loss)/d(probs).
+
+    The loss reads a single entry per row of ``probs`` (the target's one),
+    so the gradient is zero everywhere except at ``[k, ys[k]]``, which
+    holds -1/(N * probs[k, ys[k]]).
+    """
     dprobs = np.zeros( shape=probs.shape )
     
-    # k     :=  refers to the k-th experiment (oberved bigram) 
+    # k     :=  refers to the k-th experiment (observed bigram) 
     # yk    :=  refers to the target of the k-th experiment
     for k, yk in enumerate(ys):
         # N :=  len(ys)     (Number of experiments)
@@ -80,8 +96,11 @@ def d_loss_d_probs( probs: np.ndarray, ys: np.ndarray) -> np.ndarray:
 
 
 def d_loss_d_logits( probs: np.ndarray, ys: np.ndarray, alphabet_len: int) -> np.ndarray:
-    """ [...] """
-    # Following the documentation, it is easly computed as:
+    """Compute d(loss)/d(logits) as (probs - onehot(ys)) / N.
+
+    The compact form left after composing d(loss)/d(probs) with the
+    softmax Jacobian: "predicted - correct", scaled by the mean.
+    """
     yenc = data.one_hot(ys, alphabet_len)
     N = len(ys)
     dlogits = (probs - yenc) / N
@@ -90,5 +109,5 @@ def d_loss_d_logits( probs: np.ndarray, ys: np.ndarray, alphabet_len: int) -> np
 
 
 def d_loss_d_w( xenc: np.ndarray, dlogits: np.ndarray, ) -> np.ndarray:
-    """ [...] """
+    """Compute d(loss)/d(W) as xenc.T @ dlogits."""
     return xenc.T @ dlogits

@@ -21,7 +21,7 @@ EPSILON = 1e-5
 
 @pytest.fixture
 def forward_setup() -> tuple[np.ndarray, np.ndarray, int, np.ndarray, np.ndarray, np.ndarray]:
-   """Run one full forward pass on a tiny fixed dataset, shared by the gradient checks.
+    """Run one full forward pass on a tiny fixed dataset, shared by the gradient checks.
 
     Returns (probs, ys, alphabet_len, logits, xenc, W). W is cast to float64
     right after initialization, so every downstream quantity (logits, probs)
@@ -178,3 +178,51 @@ def test_dW_matches_numerical_gradient(forward_setup):
     print()
 
     assert np.allclose(dW_analytic, dW_numeric, atol=1e-6)
+
+
+def test_full_backward(forward_setup):
+    """Check the full backward() pipeline against central finite differences.
+
+    The mathematics is already validated piece by piece by the previous
+    tests; what is under test here is the *wiring*: that ``backward()``
+    orchestrates the individual gradient functions correctly (right
+    arguments, right order, right return value). Today the function is a
+    thin wrapper, but as the network grows, this test guards the assembly,
+    not the math.
+    """
+    probs, ys, alphabet_len, logits, xenc, W = forward_setup 
+
+    # --- Act: exectute what you wanna test ---
+    backward_analytic = neural.backward(probs, ys, alphabet_len, xenc)
+
+    # --- Assert: verify if works ---
+    backward_numeric = np.zeros( W.shape, dtype=np.float64 )
+    for i in range( W.shape[0] ):
+        for j in range( W.shape[1] ):
+            
+            original_weight = W[i, j]
+
+            W[i, j] = original_weight + EPSILON
+            logits_plus = neural.linear_forward(xenc, W)
+            probs_plus = neural.softmax(logits_plus)
+            loss_plus = neural.mean_nll(probs_plus, ys)
+
+            W[i, j] = original_weight - EPSILON
+            logits_minus = neural.linear_forward(xenc, W)
+            probs_minus = neural.softmax(logits_minus)
+            loss_minus = neural.mean_nll(probs_minus, ys)
+
+    
+            W[i, j] = original_weight
+            
+            backward_numeric[i, j] = ( loss_plus - loss_minus ) / (2 * EPSILON)
+    
+    # Use the "-s" option to print
+    print("[Test 4] Backward")
+    print("- backward_analytic:")
+    print(backward_analytic)
+    print("- backward_numeric:")
+    print(backward_numeric)
+    print()
+
+    assert np.allclose(backward_analytic, backward_numeric, atol=1e-6)
