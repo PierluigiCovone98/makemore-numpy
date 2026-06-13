@@ -152,9 +152,16 @@ def train( W: np.ndarray, epochs: int, lr: float, xenc: np.ndarray, ys: np.ndarr
 
 
 def sample( probs: np.ndarray, itos: data.IntToStr, rng: np.random.Generator ) -> str:
-    """ [...] 
-    
-    ``probs`` is the result of applying the ``softmax`` operation to the ``logits`` matrix.
+    """Generate one name by autoregressive sampling from a bigram model.
+
+    ``probs[i]`` is the predicted next-character distribution given that
+    the previous character is ``i``; the matrix has shape (V, V) where V
+    is the vocabulary size. Sampling starts from the boundary token
+    (index 0) and stops as soon as the boundary token is drawn again.
+
+    The function is agnostic to where ``probs`` came from: it works the
+    same on a counting model (frequencies) and on a trained neural model
+    (``softmax(W)``).
     """
     out: list[str] = []
 
