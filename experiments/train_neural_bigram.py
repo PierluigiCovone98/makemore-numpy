@@ -10,8 +10,8 @@ NAMES_PATH = PROJECT_ROOT / "data" / "names.txt"
 
 SEED = 2147483647
 
-EPOCHS = 1000
-LEARNING_RATE = 50
+EPOCHS = 500
+LEARNING_RATE = 50.0
 
 def main():
     
@@ -63,6 +63,11 @@ def main():
     W = neural.build_layer(alphabet_len, alphabet_len, rng)
     # print(W)
 
+    # OBS.1: 
+    #   We want to perform the loss computation before
+    #   and after the training. Here below is "before the training".
+    loss_before_training = _compute_forward_pass(W, xenc, ys)
+    print(f"{loss_before_training=}")
 
     # === Training Loop: Gradient Descent ===
     # By default we use "full batch" such that the number of
@@ -70,24 +75,22 @@ def main():
     # this means that we do not introduce other hyperparameters 
     # (the number of steps itself) and we do not have to manage
     # stuffs like "shuffle batches" at each epoch.
-    for epoch in range(EPOCHS):
-        
-        # === No "zerograd()" required
+    neural.train(W, EPOCHS, LEARNING_RATE, xenc, ys, alphabet_len)
 
-        # === Forward pass 
-        logits = neural.linear_forward(xenc, W)
-        probs = neural.softmax(logits)
-        loss = neural.mean_nll(probs, ys)
-        
-        print(loss)
-
-        # === Backward pass
-        dW = neural.backward(probs, ys, alphabet_len, xenc)
-
-        # === Update
-        W -= LEARNING_RATE * dW 
+    # Checks
+    loss_after_training = _compute_forward_pass(W, xenc, ys)
+    print(f"{loss_after_training=}")
+    print(f"Learned={loss_before_training-loss_after_training}")
 
 
+def _compute_forward_pass(W: np.ndarray, xenc: np.ndarray, ys: np.ndarray) -> float:
+    """Utility method to compute the forward pass and to calculate the loss 
+    of the neural given neural net.
+    """
+    logits = neural.linear_forward(xenc, W)
+    probs = neural.softmax(logits)
+    
+    return  neural.mean_nll(probs, ys)
 
 if __name__ == "__main__":
     main()

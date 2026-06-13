@@ -111,3 +111,28 @@ def d_loss_d_logits( probs: np.ndarray, ys: np.ndarray, alphabet_len: int) -> np
 def d_loss_d_w( xenc: np.ndarray, dlogits: np.ndarray, ) -> np.ndarray:
     """Compute d(loss)/d(W) as xenc.T @ dlogits."""
     return xenc.T @ dlogits
+
+
+def train( W: np.ndarray, epochs: int, lr: float, xenc: np.ndarray, ys: np.ndarray, alphabet_len: int) -> None:
+    """Train the neural network ``W``
+
+    Assumes the ``full-batch`` approach: in this way,
+    there are no differences between ``epochs`` and ``steps``
+    (or: ``iterations``).
+    """
+    if epochs <= 0:
+        raise ValueError("Epochs must be at least 1.")
+    
+    for epoch in range(epochs):
+        # === No "zerograd()" required
+
+        # === Forward pass 
+        logits = linear_forward(xenc, W)
+        probs = softmax(logits)
+        loss = mean_nll(probs, ys)
+
+        # === Backward pass
+        dW = backward(probs, ys, alphabet_len, xenc)
+            
+        # === Update
+        W -= lr * dW 
