@@ -113,17 +113,25 @@ def d_loss_d_w( xenc: np.ndarray, dlogits: np.ndarray, ) -> np.ndarray:
     return xenc.T @ dlogits
 
 
-def train( W: np.ndarray, epochs: int, lr: float, xenc: np.ndarray, ys: np.ndarray, alphabet_len: int) -> None:
-    """Train the neural network ``W``
+def train( W: np.ndarray, epochs: int, lr: float, xenc: np.ndarray, ys: np.ndarray, alphabet_len: int, log_every: int = 0) -> None:
+    """Train the network in place by full-batch gradient descent.
 
-    Assumes the ``full-batch`` approach: in this way,
-    there are no differences between ``epochs`` and ``steps``
-    (or: ``iterations``).
+    At each step: forward pass, backward pass (returns dW), parameter
+    update ``W -= lr * dW``. No gradient state to reset between steps —
+    ``backward`` is a pure function that recomputes dW from scratch each
+    time (unlike autograd engines, which accumulate gradients on
+    parameters and require an explicit zero-grad before each step).
+
+    Full batch: every step uses the whole dataset, so one step is one
+    epoch. Mini-batching can be added later as an opt-in argument.
+
+    If ``log_every > 0``, prints the loss every ``log_every`` steps;
+    if ``0`` (default), trains silently.
     """
     if epochs <= 0:
         raise ValueError("Epochs must be at least 1.")
     
-    for epoch in range(epochs):
+    for step in range(epochs):
         # === No "zerograd()" required
 
         # === Forward pass 
@@ -131,8 +139,32 @@ def train( W: np.ndarray, epochs: int, lr: float, xenc: np.ndarray, ys: np.ndarr
         probs = softmax(logits)
         loss = mean_nll(probs, ys)
 
+        # Logs
+        if log_every > 0 and (
+            (step % log_every == 0) or (step == epochs-1) ):
+            print(f"step {step:>5d} / {epochs:<5d}: loss={loss:.8f}")
+
         # === Backward pass
         dW = backward(probs, ys, alphabet_len, xenc)
             
         # === Update
-        W -= lr * dW 
+        W -= lr * dW
+
+
+def sample( probs: np.ndarray, itos: data.IntToStr, rng: np.random.Generator ) -> str:
+    """ [...] 
+    
+    ``probs`` is the result of applying the ``softmax`` operation to the ``logits`` matrix.
+    """
+    out: list[str] = []
+
+    i: int = 0
+    while True:
+        j = np.argmax( rng.multinomial(n=1, pvals=probs[i]) ).item() 
+        
+        # If the next character is the boundary token, then return (without add it)
+        if j == 0:
+            return ''.join(out)
+
+        out.append( itos[j] )
+        i = j

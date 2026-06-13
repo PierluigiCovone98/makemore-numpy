@@ -63,34 +63,22 @@ def main():
     W = neural.build_layer(alphabet_len, alphabet_len, rng)
     # print(W)
 
-    # OBS.1: 
-    #   We want to perform the loss computation before
-    #   and after the training. Here below is "before the training".
-    loss_before_training = _compute_forward_pass(W, xenc, ys)
-    print(f"{loss_before_training=}")
-
     # === Training Loop: Gradient Descent ===
     # By default we use "full batch" such that the number of
     # epochs corresponds to the number of iterations (or steps);
     # this means that we do not introduce other hyperparameters 
     # (the number of steps itself) and we do not have to manage
     # stuffs like "shuffle batches" at each epoch.
-    neural.train(W, EPOCHS, LEARNING_RATE, xenc, ys, alphabet_len)
-
-    # Checks
-    loss_after_training = _compute_forward_pass(W, xenc, ys)
-    print(f"{loss_after_training=}")
-    print(f"Learned={loss_before_training-loss_after_training}")
+    neural.train(W, EPOCHS, LEARNING_RATE, xenc, ys, alphabet_len, log_every=10)
 
 
-def _compute_forward_pass(W: np.ndarray, xenc: np.ndarray, ys: np.ndarray) -> float:
-    """Utility method to compute the forward pass and to calculate the loss 
-    of the neural given neural net.
-    """
+def _compute_loss(W: np.ndarray, xenc: np.ndarray, ys: np.ndarray) -> float:
+    """Run a forward pass and return the mean NLL loss on the dataset."""
     logits = neural.linear_forward(xenc, W)
     probs = neural.softmax(logits)
     
     return  neural.mean_nll(probs, ys)
+
 
 if __name__ == "__main__":
     main()
