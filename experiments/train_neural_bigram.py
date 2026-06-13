@@ -10,6 +10,9 @@ NAMES_PATH = PROJECT_ROOT / "data" / "names.txt"
 
 SEED = 2147483647
 
+EPOCHS = 1000
+LEARNING_RATE = 50
+
 def main():
     
     # The first thing we are going to do is: create the 
@@ -60,16 +63,31 @@ def main():
     W = neural.build_layer(alphabet_len, alphabet_len, rng)
     # print(W)
 
-    
-    # === Forward pass ===
-    logits = neural.linear_forward(xenc, W)
-    probs = neural.softmax(logits)
-    loss = neural.mean_nll(probs, ys)
-    print(loss) 
+
+    # === Training Loop: Gradient Descent ===
+    # By default we use "full batch" such that the number of
+    # epochs corresponds to the number of iterations (or steps);
+    # this means that we do not introduce other hyperparameters 
+    # (the number of steps itself) and we do not have to manage
+    # stuffs like "shuffle batches" at each epoch.
+    for epoch in range(EPOCHS):
+        
+        # === No "zerograd()" required
+
+        # === Forward pass 
+        logits = neural.linear_forward(xenc, W)
+        probs = neural.softmax(logits)
+        loss = neural.mean_nll(probs, ys)
+        
+        print(loss)
+
+        # === Backward pass
+        dW = neural.backward(probs, ys, alphabet_len, xenc)
+
+        # === Update
+        W -= LEARNING_RATE * dW 
 
 
-    # === Backward pass ===
-    # coming soon ...
 
 if __name__ == "__main__":
     main()
