@@ -149,29 +149,3 @@ def train( W: np.ndarray, epochs: int, lr: float, xenc: np.ndarray, ys: np.ndarr
             
         # === Update
         W -= lr * dW
-
-
-def sample( probs: np.ndarray, itos: data.IntToStr, rng: np.random.Generator ) -> str:
-    """Generate one name by autoregressive sampling from a bigram model.
-
-    ``probs[i]`` is the predicted next-character distribution given that
-    the previous character is ``i``; the matrix has shape (V, V) where V
-    is the vocabulary size. Sampling starts from the boundary token
-    (index 0) and stops as soon as the boundary token is drawn again.
-
-    The function is agnostic to where ``probs`` came from: it works the
-    same on a counting model (frequencies) and on a trained neural model
-    (``softmax(W)``).
-    """
-    out: list[str] = []
-
-    i: int = 0
-    while True:
-        j = np.argmax( rng.multinomial(n=1, pvals=probs[i]) ).item() 
-        
-        # If the next character is the boundary token, then return (without add it)
-        if j == 0:
-            return ''.join(out)
-
-        out.append( itos[j] )
-        i = j
