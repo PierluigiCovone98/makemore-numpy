@@ -79,7 +79,12 @@ def build_dataset_bigram( dataset: list[str], stoi: StrToInt ) -> tuple[np.ndarr
     according to the defined vocab.
 
     Notice that, because the "neural bigram" model uses all the example of the dataset
-    as training elements, the dataset and the ``taining set`` are the same entity. 
+    as training elements, the dataset and the ``taining set`` are the same entity.
+
+    Notice also that this method exists for retro-compatibility with already tested code, 
+    but in the form it's equivalent to invoke the ``data.build_dataset`` function with
+    "context_size=1"; the main difference is that here, the ``inputs vector X`` has shape
+    (N,), while in the the ``data.build_dataset`` result it has shape (N, 1).
     """
     xs, ys = [], []
 
