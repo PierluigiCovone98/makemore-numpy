@@ -19,6 +19,21 @@ def build_layer( n_inputs: int, n_outs: int, rng: np.random.Generator) -> np.nda
     return rng.standard_normal( (n_inputs, n_outs), dtype= np.float32) 
 
 
+def embed( X: np.ndarray, C: np.ndarray ) -> np.ndarray:
+    """Map each character index in ``X`` to its embedding vector via lookup in ``C``.
+
+    ``C`` is the look-up table of shape ``(V, n_emb)``, the first (linear)
+    layer of the network, learned like any other weight matri, where ``n_emb``
+    is an hyperparameter that tells how many dimension each embedding have.
+    Looking up an index is exactly ``one_hot(idx) @ C``, just done by indexing 
+    instead of a mattrix multiplication.
+
+    Indexing preserves the shape of ``X`` and appends the embedding axis:
+    ``X`` of shape ``(N, block_size)`` yields ``(N, block_size, n_emb)``.
+    """
+    return C[X]
+
+
 def linear_forward( xenc: np.ndarray, W: np.ndarray) -> np.ndarray:
     """Compute the matrix multiplication between the ``inputs vector`` and a neural net layer ``W``.
 
