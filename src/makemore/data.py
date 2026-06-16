@@ -72,11 +72,14 @@ def iter_bigrams( dataset: list[str], stoi: StrToInt ) -> Iterator[ tuple[int, i
 
 
 def build_dataset_bigram( dataset: list[str], stoi: StrToInt ) -> tuple[np.ndarray, np.ndarray]:
-    """For a given dataset, returns the training set for the "next character prediction problem“.
+    """For a given dataset, returns the dataset for the "next character prediction problem“.
     
-    The training set is composed by the ``inputs vector`` and the ``targets vector``:
+    The dataset is composed by the ``inputs vector`` and the ``targets vector``:
     both are vectors of integers representing the index of a specific character, 
     according to the defined vocab.
+
+    Notice that, because the "neural bigram" model uses all the example of the dataset
+    as training elements, the dataset and the ``taining set`` are the same entity. 
     """
     xs, ys = [], []
 
@@ -90,17 +93,18 @@ def build_dataset_bigram( dataset: list[str], stoi: StrToInt ) -> tuple[np.ndarr
 def build_dataset( raw_dataset: list[str], stoi: StrToInt, context_size: int) -> tuple[np.ndarray, np.ndarray]:
     """For a given raw dataset, returns the corresponding dataset for the "next character prediction problem“.
     
-    The dataset is composed by the ``inputs vector, X`` and the ``labels vector, Y``, where
+    The dataset is composed by the ``inputs vector, X`` and the ``targets vector, Y``, where
     ``X`` is a vector of vectors, each of which have ``context_size`` integers that represent
     characters in the context, while ``Y`` is the vector of integers representing the index 
     of the ``actual character`` of the corresponding context.
+    Notice that another term to name ``targets`` is: ``labels``.
     """
     X, Y = [], []
     
     for word in raw_dataset:
 
         # Initially a list of all 0s.
-        context: list = [0] * context_size
+        context: list[int] = [0] * context_size
 
         right_bounded_word = word + BOUNDARY_TOKEN
 
@@ -109,7 +113,11 @@ def build_dataset( raw_dataset: list[str], stoi: StrToInt, context_size: int) ->
             X.append(context)
             Y.append(ix)
 
-            # Update: crop and append
+            # Update: crop and append.
+            # Notice that, both the slice and the "+" operation
+            # creates a new list (does not modify the existing one).
+            # This was on purpose, avoiding the risk of modify
+            # the already placed context. 
             context = context[1:] + [ix] 
 
     return  ( np.array(X, dtype=np.int32), np.array(Y,  dtype=np.int32) )
