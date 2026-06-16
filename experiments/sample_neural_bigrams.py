@@ -18,7 +18,7 @@ def main():
     # === Build the training set
     dataset = data.read_dataset(NAMES_PATH)
     stoi, itos = data.build_vocab(dataset)
-    xs, ys = data.build_training_set(dataset, stoi)
+    xs, ys = data.build_dataset_bigram(dataset, stoi)
     alphabet_len = len(stoi)
     xenc = data.one_hot(xs, num_classes=alphabet_len)
 

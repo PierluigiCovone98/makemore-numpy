@@ -19,7 +19,7 @@ def main():
     # ``training set`` (inputs, xs, and targets, ys).
     dataset = data.read_dataset(NAMES_PATH)
     stoi, itos = data.build_vocab(dataset)
-    xs, ys = data.build_training_set(dataset, stoi)
+    xs, ys = data.build_dataset_bigram(dataset, stoi)
     # print( [(i.item(),t.item()) for i,t in zip(xs, ys)]  )
 
     alphabet_len = len(stoi)

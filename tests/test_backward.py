@@ -34,7 +34,7 @@ def forward_setup() -> tuple[np.ndarray, np.ndarray, int, np.ndarray, np.ndarray
     # 1. Prepare the ``training set``.
     dataset = ["ba"]
     stoi, itos = data.build_vocab(dataset)
-    xs, ys = data.build_training_set(dataset, stoi)
+    xs, ys = data.build_dataset_bigram(dataset, stoi)
     
     # 2. Initialize the ``network``.
     alphabet_len = len(stoi)
