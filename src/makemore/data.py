@@ -71,7 +71,7 @@ def iter_bigrams( dataset: list[str], stoi: StrToInt ) -> Iterator[ tuple[int, i
             yield ( stoi[ch1], stoi[ch2] )
 
 
-def build_training_set( dataset: list[str], stoi: StrToInt ) -> tuple[np.ndarray, np.ndarray]:
+def build_dataset_bigram( dataset: list[str], stoi: StrToInt ) -> tuple[np.ndarray, np.ndarray]:
     """For a given dataset, returns the training set for the "next character prediction problem“.
     
     The training set is composed by the ``inputs vector`` and the ``targets vector``:
@@ -87,7 +87,35 @@ def build_training_set( dataset: list[str], stoi: StrToInt ) -> tuple[np.ndarray
     return ( np.array(xs, dtype=np.int32), np.array(ys,  dtype=np.int32) )
 
 
-def one_hot( indices: np.ndarray, num_classes: int ) -> np.ndarray:
+def build_dataset( raw_dataset: list[str], stoi: StrToInt, context_size: int) -> tuple[np.ndarray, np.ndarray]:
+    """For a given raw dataset, returns the corresponding dataset for the "next character prediction problem“.
+    
+    The dataset is composed by the ``inputs vector, X`` and the ``labels vector, Y``, where
+    ``X`` is a vector of vectors, each of which have ``context_size`` integers that represent
+    characters in the context, while ``Y`` is the vector of integers representing the index 
+    of the ``actual character`` of the corresponding context.
+    """
+    X, Y = [], []
+    
+    for word in raw_dataset:
+
+        # Initially a list of all 0s.
+        context: list = [0] * context_size
+
+        right_bounded_word = word + BOUNDARY_TOKEN
+
+        for ch in right_bounded_word:
+            ix = stoi[ch]
+            X.append(context)
+            Y.append(ix)
+
+            # Update: crop and append
+            context = context[1:] + [ix] 
+
+    return  ( np.array(X, dtype=np.int32), np.array(Y,  dtype=np.int32) )
+
+
+def one_hot( indices: np.ndarray, num_classes: int ) -> np.ndarray: 
     """Convert a vector of indices into a matrix where each row 
     is an input encoded as ``one-hot vector``.
     """
@@ -140,3 +168,22 @@ def sample( probs: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str
 
         out.append( itos[j] )
         i = j
+
+
+def main():
+      # === Build the training set
+    raw_dataset = ["emma", "olivia"]
+    stoi, itos = build_vocab(raw_dataset)
+    xs, ys = build_dataset(raw_dataset, stoi, 1)
+
+    for i in range(len(xs)):
+        print(f"{[ itos[c] for c in xs[i] ]} ---> {itos[ys[i]]}")
+
+
+    print(type(xs[0,0]))
+
+    # I have to transofrm the case where "context_size == 1"
+
+
+if __name__=="__main__":
+    main()
