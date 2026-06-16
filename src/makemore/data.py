@@ -168,22 +168,3 @@ def sample( probs: np.ndarray, itos: IntToStr, rng: np.random.Generator ) -> str
 
         out.append( itos[j] )
         i = j
-
-
-def main():
-      # === Build the training set
-    raw_dataset = ["emma", "olivia"]
-    stoi, itos = build_vocab(raw_dataset)
-    xs, ys = build_dataset(raw_dataset, stoi, 1)
-
-    for i in range(len(xs)):
-        print(f"{[ itos[c] for c in xs[i] ]} ---> {itos[ys[i]]}")
-
-
-    print(type(xs[0,0]))
-
-    # I have to transofrm the case where "context_size == 1"
-
-
-if __name__=="__main__":
-    main()
