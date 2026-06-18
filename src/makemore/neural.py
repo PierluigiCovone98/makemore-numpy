@@ -19,18 +19,18 @@ def build_layer( n_inputs: int, n_outs: int, rng: np.random.Generator) -> np.nda
     return rng.standard_normal( (n_inputs, n_outs), dtype= np.float32) 
 
 
-def create_biases( n_inputs: int, rng: np.random.Generator) -> np.ndarray: 
-    """Create a vector of ``n_inputs`` random biases."""
+def create_biases( n_outs: int, rng: np.random.Generator) -> np.ndarray: 
+    """Create a vector of ``n_outs`` random biases."""
 
-    return rng.standard_normal( n_inputs, dtype= np.float32) 
+    return rng.standard_normal( n_outs, dtype= np.float32) 
 
 
 def embed( X: np.ndarray, C: np.ndarray ) -> np.ndarray:
     """Map each character index in ``X`` to its embedding vector via lookup in ``C``.
 
     ``C`` is the look-up table of shape ``(V, n_emb)``, the first (linear)
-    layer of the network, learned like any other weight matri, where ``n_emb``
-    is an hyperparameter that tells how many dimension each embedding have.
+    layer of the network, learned like any other weight matrix, where ``n_emb``
+    is an hyperparameter that tells how many dimension have each embedding.
     Looking up an index is exactly ``one_hot(idx) @ C``, just done by indexing 
     instead of a mattrix multiplication.
 

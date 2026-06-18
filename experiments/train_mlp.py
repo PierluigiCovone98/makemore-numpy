@@ -57,14 +57,14 @@ def main():
     # print(f"{embeddings.shape=}")
 
     # --- 2. Create the ``hidden layer tanh``
-    #   First, we need a the proper input to the hidden linear layer. 
+    #   First, we need the proper input to the hidden linear layer. 
     concat_embeddings = neural.concatenate_embs(embeddings)
     
-    #   Then, wecreate it's parameters and perform the forward pass.
+    #   Then, create its parameters and perform the forward pass.
     W1 = neural.build_layer( concat_embeddings.shape[1], HIDDEN_LAYER_OUTPUTS, rng)
-    # Notice that in a (lineae) layer there's one bias-per-neuron.
+    # Notice that in a (linear) layer there's one bias-per-neuron.
     b1 = neural.create_biases( HIDDEN_LAYER_OUTPUTS, rng )
-    activations = np.tanh( neural.linear_forward(concat_embeddings, W1) + b1, dtype= np.float32 )
+    activations = np.tanh( neural.linear_forward(concat_embeddings, W1) + b1 )
 
 
     # --- 3. Create the last layer
@@ -80,6 +80,9 @@ def main():
     # ``Y`` is over the entire dataset: we will perform the split in
     #  ``train``, ``dev``/``validation``, ``test`` sets.
     loss = neural.mean_nll(probs, Y)
+
+    # --- 6. Define parameters
+    parameters = [C, W1, b1, W2, b2]
 
     print(loss)
 
