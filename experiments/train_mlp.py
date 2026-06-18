@@ -18,6 +18,8 @@ BLOCK_SIZE = 3
 # has each embedding.
 N_EMB = 2
 
+HIDDEN_LAYER_OUTPUTS = 100
+
 
 def main():
 
@@ -47,16 +49,44 @@ def main():
     # Then map every index in X to its embedding row.
     rng = np.random.default_rng(SEED)
 
-    # C is a learnable parameter, exactly like W in the bigram.
+
+    # --- Forward pass ---
+    # --- 1. Create embeddings; remember that ``C`` is a learnable parameter.
     C = neural.build_layer(alphabet_len, N_EMB, rng)
     embeddings = neural.embed(X, C)
+    # print(f"{embeddings.shape=}")
 
-    # Expected shape: (N, BLOCK_SIZE, N_EMB) = (N, 3, 2).
-    #
-    # It is NOT (N, 27, 2): 27 is the number of characters, so the numberw of
-    # orws in C. The lookup process seleects ``BLOCK_SIZE`` of those rows 
-    # per example.
-    print(embeddings.shape)
+    # --- 2. Create the ``hidden layer tanh``
+    #   First, we need a the proper input to the hidden linear layer. 
+    concat_embeddings = neural.concatenate_embs(embeddings)
+    
+    #   Then, wecreate it's parameters and perform the forward pass.
+    W1 = neural.build_layer( concat_embeddings.shape[1], HIDDEN_LAYER_OUTPUTS, rng)
+    # Notice that in a (lineae) layer there's one bias-per-neuron.
+    b1 = neural.create_biases( HIDDEN_LAYER_OUTPUTS, rng )
+    activations = np.tanh( neural.linear_forward(concat_embeddings, W1) + b1, dtype= np.float32 )
+
+
+    # --- 3. Create the last layer
+    W2 = neural.build_layer(HIDDEN_LAYER_OUTPUTS, alphabet_len, rng)
+    b2 = neural.create_biases( alphabet_len, rng )
+    
+    logits = neural.linear_forward(activations, W2) + b2
+
+    # --- 4. Softmax
+    probs = neural.softmax(logits)
+
+    # --- 5. Loss
+    # ``Y`` is over the entire dataset: we will perform the split in
+    #  ``train``, ``dev``/``validation``, ``test`` sets.
+    loss = neural.mean_nll(probs, Y)
+
+    print(loss)
+
+
+
+
+
 
     
 if __name__ == "__main__":

@@ -19,6 +19,12 @@ def build_layer( n_inputs: int, n_outs: int, rng: np.random.Generator) -> np.nda
     return rng.standard_normal( (n_inputs, n_outs), dtype= np.float32) 
 
 
+def create_biases( n_inputs: int, rng: np.random.Generator) -> np.ndarray: 
+    """Create a vector of ``n_inputs`` random biases."""
+
+    return rng.standard_normal( n_inputs, dtype= np.float32) 
+
+
 def embed( X: np.ndarray, C: np.ndarray ) -> np.ndarray:
     """Map each character index in ``X`` to its embedding vector via lookup in ``C``.
 
@@ -34,7 +40,23 @@ def embed( X: np.ndarray, C: np.ndarray ) -> np.ndarray:
     return C[X]
 
 
-def linear_forward( xenc: np.ndarray, W: np.ndarray) -> np.ndarray:
+def concatenate_embs( embeddings: np.ndarray ) -> np.ndarray:
+    """Performs the concatenation of embeddings.
+    
+    It assumes that the input matrix has a shape equal to (N, context_size, n_emb),
+    where:
+        -   ``N`` is the number of ``observed examples``;
+        -   ``context_size`` is the number of spots in the context window;
+        -   ``n_emb`` are dimensions of each array.
+    
+    Returns the concatenation of the input matrix, that is a matrix of shape
+    equal to: 
+        (N, context_size * n_emb).
+    """
+    return embeddings.reshape( embeddings.shape[0], embeddings.shape[1] * embeddings.shape[2] )
+
+
+def linear_forward( xenc: np.ndarray, W: np.ndarray ) -> np.ndarray:
     """Compute the matrix multiplication between the ``inputs vector`` and a neural net layer ``W``.
 
     Assumes that neurons in the layer ``W`` are composed only by weights.  
