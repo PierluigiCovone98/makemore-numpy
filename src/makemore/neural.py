@@ -114,7 +114,22 @@ def d_loss_d_w( layer_input: np.ndarray, d_out: np.ndarray ) -> np.ndarray:
     concatenated embeddings feeding the hidden layer); 
     
     ``d_out`` is the gradient already backpropagated to 
-    that layer's pre-activation output (e.g. ``dlogits`` for the 
-    output layer or ``dpreactivations`` for the hidden one).
+    that layer's output .
     """
     return layer_input.T @ d_out
+
+
+def d_loss_d_x( d_out: np.ndarray, W: np.ndarray) -> np.ndarray :
+    """Gradient of the loss w.r.t. a linear layer's input ``x``.
+     
+    ``d_out`` is the gradient already backpropagated to 
+    that layer's pre-activation output.
+
+    ``W`` are the linear layer's weights. 
+    """
+    return d_out @ W.T
+
+
+def d_loss_d_b( d_out: np.ndarray ) -> np.ndarray:
+    """[...]"""
+    return d_out.sum(axis=0)  

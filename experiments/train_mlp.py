@@ -30,7 +30,7 @@ def main():
     #   Y: (N,)            int  -- each entry is the next-character index to predict
     raw_dataset = data.read_dataset(NAMES_PATH)
     stoi, itos = data.build_vocab(raw_dataset)
-    X, Y = data.build_dataset(raw_dataset, stoi, BLOCK_SIZE)
+    X, Y = data.build_dataset(raw_dataset[:32], stoi, BLOCK_SIZE)
 
     # Vocabulary size V
     alphabet_len = len(stoi)
@@ -76,11 +76,28 @@ def main():
 
     # --- Loss.
     loss = neural.mean_nll(probs, Y)
+    print(loss)
 
-    # --- 6. Define parameters
+    # --- Define parameters
     parameters = [C, W1, b1, W2, b2]
 
-    print(loss)
+
+
+    # --- Backward pass ---
+    #
+    # 1. We have already seen (with the neural bigram model)
+    #    that d(loss)/d(probs) is not used by the subsequent
+    #    step, that is d(loss)/d(logits).
+    #    So: let's directly compute dlogits here.
+    dlogits = neural.d_loss_d_logits(probs, Y, alphabet_len) 
+    
+    # 2. Let's now create dW2 and dactivations
+    dW2 = neural.d_loss_d_w(activations, dlogits)
+    dactivations = neural.d_loss_d_x(dlogits, W2)
+    db2 = neural.d_loss_d_b(dlogits)
+
+
+
 
 
 
