@@ -51,34 +51,30 @@ def main():
 
 
     # --- Forward pass ---
-    # --- 1. Create embeddings; remember that ``C`` is a learnable parameter.
+    # --- First layer.
     C = neural.build_layer(alphabet_len, N_EMB, rng)
     embeddings = neural.embed(X, C)
-    # print(f"{embeddings.shape=}")
-
-    # --- 2. Create the ``hidden layer tanh``
-    #   First, we need the proper input to the hidden linear layer. 
+    
+    # Linear layers are defined on vectors, not on matrices. 
+    # This is why the output of the "first linear layer" must be a vector
+    # (and so: why we concatenate).
     concat_embeddings = neural.concatenate_embs(embeddings)
     
-    #   Then, create its parameters and perform the forward pass.
+    # --- Hidden layer.
     W1 = neural.build_layer( concat_embeddings.shape[1], HIDDEN_LAYER_OUTPUTS, rng)
     # Notice that in a (linear) layer there's one bias-per-neuron.
     b1 = neural.create_biases( HIDDEN_LAYER_OUTPUTS, rng )
     activations = np.tanh( neural.linear_forward(concat_embeddings, W1) + b1 )
 
-
-    # --- 3. Create the last layer
+    # --- Last layer.
     W2 = neural.build_layer(HIDDEN_LAYER_OUTPUTS, alphabet_len, rng)
     b2 = neural.create_biases( alphabet_len, rng )
-    
     logits = neural.linear_forward(activations, W2) + b2
 
-    # --- 4. Softmax
+    # --- Softmax.
     probs = neural.softmax(logits)
 
-    # --- 5. Loss
-    # ``Y`` is over the entire dataset: we will perform the split in
-    #  ``train``, ``dev``/``validation``, ``test`` sets.
+    # --- Loss.
     loss = neural.mean_nll(probs, Y)
 
     # --- 6. Define parameters

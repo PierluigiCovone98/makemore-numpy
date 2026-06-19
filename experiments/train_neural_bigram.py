@@ -1,6 +1,6 @@
 """Solve the "next character prediction problem" with a "neural" approach."""
 from pathlib import Path
-from makemore import data, neural
+from makemore import data, neural, neural_bigram
 
 import numpy as np
 
@@ -69,7 +69,7 @@ def main():
     # this means that we do not introduce other hyperparameters 
     # (the number of steps itself) and we do not have to manage
     # stuffs like "shuffle batches" at each epoch.
-    neural.train(W, EPOCHS, LEARNING_RATE, xenc, ys, alphabet_len, log_every=10)
+    neural_bigram.train(W, EPOCHS, LEARNING_RATE, xenc, ys, alphabet_len, log_every=10)
 
 
 def _compute_loss(W: np.ndarray, xenc: np.ndarray, ys: np.ndarray) -> float:

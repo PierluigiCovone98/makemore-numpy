@@ -1,6 +1,6 @@
 """Generate names by sampling from the trained neural bigram model."""
 from pathlib import Path
-from makemore import data, neural
+from makemore import data, neural, neural_bigram
 
 import numpy as np
 
@@ -25,7 +25,7 @@ def main():
     # === Actual training
     rng = np.random.default_rng(SEED)
     W = neural.build_layer(alphabet_len, alphabet_len, rng)
-    neural.train(W, EPOCHS, LEARNING_RATE, xenc, ys, alphabet_len)
+    neural_bigram.train(W, EPOCHS, LEARNING_RATE, xenc, ys, alphabet_len)
 
     # === Sample ===
     # === Build the (V, V) transition matrix

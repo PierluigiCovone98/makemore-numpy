@@ -11,7 +11,7 @@ throughout, since finite differences are too noisy in float32.
 import pytest
 import numpy as np
 
-from makemore import data, neural
+from makemore import data, neural, neural_bigram
 
 
 # Constants
@@ -60,7 +60,7 @@ def test_dprobs_matches_numerical_gradient(forward_setup):
     probs, ys, _, _, _, _= forward_setup 
 
     # --- Act: exectute what you wanna test ---
-    dprobs_analytic = neural.d_loss_d_probs(probs, ys).astype( np.float64 )
+    dprobs_analytic = neural_bigram.d_loss_d_probs(probs, ys).astype( np.float64 )
 
     # --- Assert: verify if works ---
     dprobs_numeric = np.zeros( probs.shape, dtype=np.float64 )
@@ -193,7 +193,7 @@ def test_full_backward(forward_setup):
     probs, ys, alphabet_len, logits, xenc, W = forward_setup 
 
     # --- Act: exectute what you wanna test ---
-    backward_analytic = neural.backward(probs, ys, alphabet_len, xenc)
+    backward_analytic = neural_bigram.backward(probs, ys, alphabet_len, xenc)
 
     # --- Assert: verify if works ---
     backward_numeric = np.zeros( W.shape, dtype=np.float64 )
