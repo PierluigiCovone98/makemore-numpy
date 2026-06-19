@@ -131,5 +131,24 @@ def d_loss_d_x( d_out: np.ndarray, W: np.ndarray) -> np.ndarray :
 
 
 def d_loss_d_b( d_out: np.ndarray ) -> np.ndarray:
-    """[...]"""
+    """Gradient of the loss w.r.t. a linear layer's bias.
+
+    In the forward pass the bias ``b`` (shape ``(n_outs,)``) is broadcast and
+    added to every one of the ``N`` rows of the layer's output. A value reused
+    N times forward, accumulates N contributions backward.
+    For this is the reason the gradient sums ``d_out`` over the batch axis, 
+    collapsing ``(N, n_outs)`` to ``(n_outs,)`` (the shape of ``b``).
+    """
     return d_out.sum(axis=0)  
+
+
+def d_loss_d_preactivations( activations: np.ndarray, dactivations: np.ndarray ) -> np.ndarray:
+    """Gradient of the loss w.r.t. a tanh layer's pre-activations (its input).
+
+    Backpropagates through ``a = tanh(z)``: the local derivative is ``1 - a**2``,
+    so the gradient at the input ``z`` is the incoming gradient at the output,
+    ``dactivations``, scaled element-wise by ``1 - activations**2``.
+    ``activations`` is the tanh output already computed in the forward pass,
+    reused here so tanh is never recomputed.
+    """
+    return dactivations * (1 - np.square(activations))

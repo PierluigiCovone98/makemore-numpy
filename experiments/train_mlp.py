@@ -64,7 +64,8 @@ def main():
     W1 = neural.build_layer( concat_embeddings.shape[1], HIDDEN_LAYER_OUTPUTS, rng)
     # Notice that in a (linear) layer there's one bias-per-neuron.
     b1 = neural.create_biases( HIDDEN_LAYER_OUTPUTS, rng )
-    activations = np.tanh( neural.linear_forward(concat_embeddings, W1) + b1 )
+    preactivations = neural.linear_forward(concat_embeddings, W1) + b1
+    activations = np.tanh( preactivations )
 
     # --- Last layer.
     W2 = neural.build_layer(HIDDEN_LAYER_OUTPUTS, alphabet_len, rng)
@@ -91,12 +92,13 @@ def main():
     #    So: let's directly compute dlogits here.
     dlogits = neural.d_loss_d_logits(probs, Y, alphabet_len) 
     
-    # 2. Let's now create dW2 and dactivations
+    # 2. Let's now deal layer 2 of the MLP
     dW2 = neural.d_loss_d_w(activations, dlogits)
     dactivations = neural.d_loss_d_x(dlogits, W2)
     db2 = neural.d_loss_d_b(dlogits)
 
-
+    # 3. Proceeding back to the layer 1
+    dpreactivations = neural.d_loss_d_preactivations(activations, dactivations)
 
 
 
