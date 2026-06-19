@@ -22,7 +22,7 @@ The same "next-character prediction problem" is solved twice, with two approache
 - **Counting model** (`src/makemore/counting.py`): builds the bigram
   transition matrix directly from frequencies,
   then samples from it. No learning involved.
-- **Neural model** (`src/makemore/neural.py`): a single linear layer
+- **Neural model** (`src/makemore/neural_bigram.py`): a single linear layer
   followed by softmax and mean negative log-likelihood. The weights are
   initialized randomly and trained by full-batch gradient descent. The
   dataset is small enough that the network is re-trained from scratch
@@ -35,10 +35,30 @@ approach adds no power on this problem — but it opens a door the
 counting model can't walk through, because learning scales to deeper networks. 
 Those are the ones explored in the next steps of the roadmap
 
+## Code organization
+ 
+The library separates **shared primitives** from **model-specific
+wiring**, so each model reuses the same building blocks without
+inheriting another model's assumptions:
+ 
+- `src/makemore/data.py` — dataset loading, vocabulary, dataset
+  construction, and one-hot encoding. Shared by every approach.
+- `src/makemore/neural.py` — architecture-agnostic neural primitives:
+  layer and bias initialization, the embedding lookup, the linear
+  forward, softmax, mean NLL, and the generic gradient pieces
+  (`d_loss_d_logits`, `d_loss_d_w`). Used by more than one model.
+- `src/makemore/neural_bigram.py` — the neural bigram model: its
+  backward pass and training loop, built on the primitives above.
+- `src/makemore/counting.py` — the counting model.
+Keeping the primitives separate is what lets the MLP (next on the
+roadmap) reuse the forward and gradient building blocks while writing
+its own, separate backward assembly.
+
 ## Documentation
 
-The full derivation of the backward pass for the neural model - 
-from the loss down to the weights — is in [`docs/backpropagation_by_hand.pdf`](docs/backpropagation_by_hand.pdf).
+The full derivation of the backward pass for the **neural bigram** model —
+from the loss down to the weights — is in
+[`docs/backpropagation_by_hand.pdf`](docs/backpropagation_by_hand.pdf)
 
 ## Setup
 
