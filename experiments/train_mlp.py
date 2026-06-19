@@ -1,6 +1,6 @@
 """ [...] """
 from pathlib import Path
-from makemore import data, neural
+from makemore import data, neural, neural_mlp
 
 import numpy as np
 
@@ -83,28 +83,10 @@ def main():
     parameters = [C, W1, b1, W2, b2]
 
 
-
-    # --- Backward pass ---
-    #
-    # 1. We have already seen (with the neural bigram model)
-    #    that d(loss)/d(probs) is not used by the subsequent
-    #    step, that is d(loss)/d(logits).
-    #    So: let's directly compute dlogits here.
-    dlogits = neural.d_loss_d_logits(probs, Y, alphabet_len) 
-    
-    # 2. Let's now deal layer 2 of the MLP
-    dW2 = neural.d_loss_d_w(activations, dlogits)
-    dactivations = neural.d_loss_d_x(dlogits, W2)
-    db2 = neural.d_loss_d_b(dlogits)
-
-    # 3. Proceeding back to the layer 1
-    dpreactivations = neural.d_loss_d_preactivations(activations, dactivations)
-
-
-
-
-
-
+    # --- Backward ---
+    dC, dW1, db1, dW2, db2 = neural_mlp.backward(alphabet_len, BLOCK_SIZE, N_EMB, X, Y,
+                                                 concat_embeddings, W1, W2, activations,
+                                                 probs)
 
     
 if __name__ == "__main__":

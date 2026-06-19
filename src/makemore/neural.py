@@ -152,3 +152,29 @@ def d_loss_d_preactivations( activations: np.ndarray, dactivations: np.ndarray )
     reused here so tanh is never recomputed.
     """
     return dactivations * (1 - np.square(activations))
+
+
+def unconcatenate_embs( dconcat: np.ndarray, context_size: int, n_emb: int) -> np.ndarray:
+    """Structural inverse of the ``concatenate_embs`` function: 
+    regroup a concatenated gradient back into per-position embeddings.
+
+    The forward concatenation only reshapes data, so its backward is a reshape too. 
+    ``dconcat`` of shape ``(N, context_size * n_emb)`` becomes ``(N, context_size, n_emb)``; 
+    ``N`` is read from ``dconcat``, while ``context_size`` and ``n_emb`` must be passed, 
+    since during the forward there's a multiplication that fuse them.
+    """
+    return dconcat.reshape(dconcat.shape[0], context_size, n_emb)
+
+
+def d_loss_d_C( dembeddings: np.ndarray, X: np.ndarray, alphabet_len: int, n_emb: int ) -> np.ndarray:
+    """Gradient of the loss w.r.t. the embedding table ``C`` (the lookup backward).
+
+    The forward ``C[X]`` gathers rows of ``C`` by index; an index repeated across
+    contexts reads the same row many times, so its gradient is the sum of every
+    occurrence's contribution. ``np.add.at`` scatters ``dembeddings`` back into a
+    zeroed ``dC`` of shape ``(alphabet_len, n_emb)`` -- the shape of ``C`` --
+    accumulating where the same index appears more than once.
+    """
+    dC = np.zeros((alphabet_len, n_emb))
+    np.add.at(dC, X, dembeddings)
+    return dC
