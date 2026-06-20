@@ -169,7 +169,7 @@ def unconcatenate_embs( dconcat: np.ndarray, context_size: int, n_emb: int) -> n
 def d_loss_d_C( dembeddings: np.ndarray, X: np.ndarray, alphabet_len: int, n_emb: int ) -> np.ndarray:
     """Gradient of the loss w.r.t. the embedding table ``C`` (the lookup backward).
 
-    The forward ``C[X]`` gathers rows of ``C`` by index; an index repeated across
+    The forward ``C[X]`` selects rows of ``C`` by index; an index repeated across
     contexts reads the same row many times, so its gradient is the sum of every
     occurrence's contribution. ``np.add.at`` scatters ``dembeddings`` back into a
     zeroed ``dC`` of shape ``(alphabet_len, n_emb)`` -- the shape of ``C`` --
