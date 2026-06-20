@@ -175,6 +175,6 @@ def d_loss_d_C( dembeddings: np.ndarray, X: np.ndarray, alphabet_len: int, n_emb
     zeroed ``dC`` of shape ``(alphabet_len, n_emb)`` -- the shape of ``C`` --
     accumulating where the same index appears more than once.
     """
-    dC = np.zeros((alphabet_len, n_emb))
+    dC = np.zeros((alphabet_len, n_emb), dtype= np.float32)
     np.add.at(dC, X, dembeddings)
     return dC

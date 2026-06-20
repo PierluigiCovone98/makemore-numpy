@@ -20,6 +20,9 @@ N_EMB = 2
 
 HIDDEN_LAYER_OUTPUTS = 100
 
+LEARNING_RATE = 0.1
+EPOCHS = 200
+
 
 def main():
 
@@ -30,7 +33,7 @@ def main():
     #   Y: (N,)            int  -- each entry is the next-character index to predict
     raw_dataset = data.read_dataset(NAMES_PATH)
     stoi, itos = data.build_vocab(raw_dataset)
-    X, Y = data.build_dataset(raw_dataset[:32], stoi, BLOCK_SIZE)
+    X, Y = data.build_dataset(raw_dataset, stoi, BLOCK_SIZE)
 
     # Vocabulary size V
     alphabet_len = len(stoi)
@@ -49,44 +52,41 @@ def main():
     # Then map every index in X to its embedding row.
     rng = np.random.default_rng(SEED)
 
-
-    # --- Forward pass ---
-    # --- First layer.
+    # --- Parameters Creation ----
     C = neural.build_layer(alphabet_len, N_EMB, rng)
-    embeddings = neural.embed(X, C)
-    
-    # Linear layers are defined on vectors, not on matrices. 
-    # This is why the output of the "first linear layer" must be a vector
-    # (and so: why we concatenate).
-    concat_embeddings = neural.concatenate_embs(embeddings)
-    
-    # --- Hidden layer.
-    W1 = neural.build_layer( concat_embeddings.shape[1], HIDDEN_LAYER_OUTPUTS, rng)
-    # Notice that in a (linear) layer there's one bias-per-neuron.
+    W1 = neural.build_layer( BLOCK_SIZE * N_EMB, HIDDEN_LAYER_OUTPUTS, rng)
     b1 = neural.create_biases( HIDDEN_LAYER_OUTPUTS, rng )
-    preactivations = neural.linear_forward(concat_embeddings, W1) + b1
-    activations = np.tanh( preactivations )
-
-    # --- Last layer.
     W2 = neural.build_layer(HIDDEN_LAYER_OUTPUTS, alphabet_len, rng)
     b2 = neural.create_biases( alphabet_len, rng )
-    logits = neural.linear_forward(activations, W2) + b2
 
-    # --- Softmax.
-    probs = neural.softmax(logits)
-
-    # --- Loss.
-    loss = neural.mean_nll(probs, Y)
-    print(loss)
-
-    # --- Define parameters
     parameters = [C, W1, b1, W2, b2]
 
+    # === TRAINING LOOP ===
 
-    # --- Backward ---
-    dC, dW1, db1, dW2, db2 = neural_mlp.backward(alphabet_len, BLOCK_SIZE, N_EMB, X, Y,
-                                                 concat_embeddings, W1, W2, activations,
-                                                 probs)
+    for _ in range(EPOCHS):
+        # --- FORWARD PASS ---
+        embeddings = neural.embed(X, C)
+        # Linear layers are defined on vectors, not on matrices. 
+        # This is why the output of the "first linear layer" must be a vector
+        # (and so: why we concatenate).
+        concat_embeddings = neural.concatenate_embs(embeddings)
+        preactivations = neural.linear_forward(concat_embeddings, W1) + b1
+        activations = np.tanh( preactivations )
+        logits = neural.linear_forward(activations, W2) + b2
+        probs = neural.softmax(logits)
+        loss = neural.mean_nll(probs, Y)
+
+        # Log   
+        print(loss)
+
+        # --- Backward ---
+        gradients = neural_mlp.backward(alphabet_len, BLOCK_SIZE, N_EMB, X, Y,
+                                                    concat_embeddings, W1, W2, activations,
+                                                    probs)
+        # --- Update ---
+        for p, grad in zip(parameters, gradients):
+            p -= LEARNING_RATE * grad
+
 
     
 if __name__ == "__main__":
