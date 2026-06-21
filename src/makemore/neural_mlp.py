@@ -56,7 +56,7 @@ def forward(X: np.ndarray, params: MLPParams) -> tuple[np.ndarray, np.ndarray, n
     return (probs, activations, concat_embeddings)
 
 
-def backward(alphabet_len: int, context_size: int, n_emb: int, X: np.ndarray, Y: np.ndarray,
+def backward(alphabet_len: int, context_size: int, n_emb: int, Xtr: np.ndarray, Ytr: np.ndarray,
             concat_embeddings: np.ndarray, W1: np.ndarray, W2: np.ndarray,  activations: np.ndarray,
             probs: np.ndarray,) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Run the full MLP backward pass; return the gradients ``(dC, dW1, db1, dW2, db2)``.
@@ -68,7 +68,7 @@ def backward(alphabet_len: int, context_size: int, n_emb: int, X: np.ndarray, Y:
     """
     # Compute ``dlogits`` without compute ``dprobs`` first, 
     # as we've alredy seen for the nerual bigram model. 
-    dlogits = neural.d_loss_d_logits(probs, Y, alphabet_len) 
+    dlogits = neural.d_loss_d_logits(probs, Ytr, alphabet_len) 
     
     # Backward through the MLP layer2. 
     dW2 = neural.d_loss_d_w(activations, dlogits)
@@ -83,13 +83,13 @@ def backward(alphabet_len: int, context_size: int, n_emb: int, X: np.ndarray, Y:
 
     # Backward through the MLP first layer.
     dembeddings = neural.unconcatenate_embs(dconcat, context_size, n_emb)
-    dC = neural.d_loss_d_C( dembeddings, X, alphabet_len, n_emb )
+    dC = neural.d_loss_d_C( dembeddings, Xtr, alphabet_len, n_emb )
 
     return (dC, dW1, db1, dW2, db2)
 
 
 def train( epochs: int, lr: float, alphabet_len: int, context_size: int, n_emb: int,
-          X: np.ndarray, Y: np.ndarray, 
+          Xtr: np.ndarray, Ytr: np.ndarray, 
           params: MLPParams, log_every: int = 0 ) -> None:
     """Train ``params`` in place by full-batch gradient descent.
 
@@ -106,9 +106,9 @@ def train( epochs: int, lr: float, alphabet_len: int, context_size: int, n_emb: 
         # No "zerograd()" required because there's no computational graph under the hood.
 
         # === FORWARD ===
-        probs, activations, concat_embeddings = forward(X, params)
+        probs, activations, concat_embeddings = forward(Xtr, params)
         
-        loss = neural.mean_nll(probs, Y)
+        loss = neural.mean_nll(probs, Ytr)
 
         # Logs
         if log_every > 0 and (
@@ -116,7 +116,7 @@ def train( epochs: int, lr: float, alphabet_len: int, context_size: int, n_emb: 
                 print(f"step {step:>5d} / {epochs:<5d}: loss={loss:.8f}")
 
         # === Backward ===
-        dC, dW1, db1, dW2, db2 = backward(alphabet_len, context_size, n_emb, X, Y,
+        dC, dW1, db1, dW2, db2 = backward(alphabet_len, context_size, n_emb, Xtr, Ytr,
                             concat_embeddings, params.W1, params.W2, activations, probs)
 
     
