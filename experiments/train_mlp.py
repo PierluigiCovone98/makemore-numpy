@@ -10,9 +10,9 @@ NAMES_PATH = PROJECT_ROOT / "data" / "names.txt"
 
 SEED = 2147483647
 
-# ``BLOCK_SIZE`` is an hyperparameter that tells  
+# ``CONTEXT_SIZE`` is an hyperparameter that tells  
 # how many previous characters the model is allowed to look at. 
-BLOCK_SIZE = 3
+CONTEXT_SIZE = 3
 
 # ``N_EMB`` is an hyperparameter that tells how many dimension
 # has each embedding.
@@ -21,72 +21,25 @@ N_EMB = 2
 HIDDEN_LAYER_OUTPUTS = 100
 
 LEARNING_RATE = 0.1
-EPOCHS = 200
+EPOCHS = 500
 
 
 def main():
 
-    # --- Dataset ---
-    # Load the raw words, build the vocabulary, then build the (X, Y) dataset
-    # with a context window of BLOCK_SIZE characters:
-    #   X: (N, BLOCK_SIZE) int  -- each row is one context (BLOCK_SIZE indices)
-    #   Y: (N,)            int  -- each entry is the next-character index to predict
+    # === Build the Dataset ===
     raw_dataset = data.read_dataset(NAMES_PATH)
     stoi, itos = data.build_vocab(raw_dataset)
-    X, Y = data.build_dataset(raw_dataset, stoi, BLOCK_SIZE)
+    X, Y = data.build_dataset(raw_dataset, stoi, CONTEXT_SIZE)
 
-    # Vocabulary size V
-    alphabet_len = len(stoi)
+    alphabet_len = len(stoi)    # Vocabulary size: V
 
-    # --- Optional Logs ---
-    # Read the first examples back as (context -> target) to verify the window:
-    # for i in range(5):
-    #     print(f"{''.join(itos[x] for x in X[i])} -> {itos[Y[i]]}")
-    #
-    # print(X[4, 2])   # expected: 1
-
-    
-    # --- Embedding lookup ---
-    # Embedding forward pass: create the look-up table C, 
-    # the first (linear) layer of the MLP.
-    # Then map every index in X to its embedding row.
+    # === Parameters Creation ===
     rng = np.random.default_rng(SEED)
-
-    # --- Parameters Creation ----
-    C = neural.build_layer(alphabet_len, N_EMB, rng)
-    W1 = neural.build_layer( BLOCK_SIZE * N_EMB, HIDDEN_LAYER_OUTPUTS, rng)
-    b1 = neural.create_biases( HIDDEN_LAYER_OUTPUTS, rng )
-    W2 = neural.build_layer(HIDDEN_LAYER_OUTPUTS, alphabet_len, rng)
-    b2 = neural.create_biases( alphabet_len, rng )
-
-    parameters = [C, W1, b1, W2, b2]
+    parameters = neural_mlp.init_params(alphabet_len, N_EMB, CONTEXT_SIZE, HIDDEN_LAYER_OUTPUTS, rng)
 
     # === TRAINING LOOP ===
-
-    for _ in range(EPOCHS):
-        # --- FORWARD PASS ---
-        embeddings = neural.embed(X, C)
-        # Linear layers are defined on vectors, not on matrices. 
-        # This is why the output of the "first linear layer" must be a vector
-        # (and so: why we concatenate).
-        concat_embeddings = neural.concatenate_embs(embeddings)
-        preactivations = neural.linear_forward(concat_embeddings, W1) + b1
-        activations = np.tanh( preactivations )
-        logits = neural.linear_forward(activations, W2) + b2
-        probs = neural.softmax(logits)
-        loss = neural.mean_nll(probs, Y)
-
-        # Log   
-        print(loss)
-
-        # --- Backward ---
-        gradients = neural_mlp.backward(alphabet_len, BLOCK_SIZE, N_EMB, X, Y,
-                                                    concat_embeddings, W1, W2, activations,
-                                                    probs)
-        # --- Update ---
-        for p, grad in zip(parameters, gradients):
-            p -= LEARNING_RATE * grad
-
+    neural_mlp.train(EPOCHS, LEARNING_RATE, alphabet_len, CONTEXT_SIZE, N_EMB,
+                     X, Y, parameters, 10)
 
     
 if __name__ == "__main__":
