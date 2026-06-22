@@ -14,7 +14,7 @@ forward quantity feeds which gradient.
 import numpy as np
 
 from dataclasses import dataclass
-from makemore import neural
+from makemore import neural, data
 
 
 @dataclass
@@ -149,3 +149,37 @@ def evaluate(X: np.ndarray, Y: np.ndarray, params: MLPParams) -> float:
     """
     probs, _, _ = forward(X, params)
     return neural.mean_nll(probs, Y)
+
+
+def sample(params: MLPParams, itos: data.IntToStr, context_size: int, rng: np.random.Generator) -> str:
+    """Generate one string by autoregressive sampling from the neural MLP model.
+
+    The next-character distribution depends on the current context, so it is
+    recomputed each step via ``forward``.
+    Starts from an all-boundary context and stops when the boundary token (index 0) is drawn.
+    """
+
+    out: list[str] = []
+    context: list[int] = [0] * context_size
+
+    while True:
+        # forward works on a batch -> pack the single context as (1, context_size)
+        Xb = np.array(context).reshape(1, context_size)
+        probs, _, _ = forward(Xb, params)   # (1, V)
+
+        # Multinomial's float64 sum check allows only float64 as type.
+        # Notice that ``p`` is now a vector
+        p = probs[0].astype(np.float64) 
+        p /= p.sum()
+
+        # float32 softmax can sum to 1.0000001;
+        #  renormalize in float64 so multinomial's sum check passes
+        j = np.argmax( rng.multinomial(n=1, pvals=p) ).item()
+
+        if j == 0:
+            return ''.join(out)
+
+        # Append the new character
+        out.append(itos[j])
+        # Slide the window
+        context = context[1:] + [j]

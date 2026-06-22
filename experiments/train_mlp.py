@@ -34,6 +34,8 @@ DEV_FRAC = 0.1
 
 BATCH_SIZE = 32
 
+NUM_SAMPLES = 10
+
 
 def main():
 
@@ -43,7 +45,6 @@ def main():
     raw_dataset = data.read_dataset(NAMES_PATH)
     stoi, itos = data.build_vocab(raw_dataset)
     splits = data.split_raw_dataset(raw_dataset, TRAIN_FRAC, DEV_FRAC, rng)
-
 
     Xtr, Ytr = data.build_dataset(splits.raw_train_set, stoi, CONTEXT_SIZE)
     Xdev, Ydev = data.build_dataset(splits.raw_dev_set, stoi, CONTEXT_SIZE)
@@ -62,6 +63,11 @@ def main():
     print("train:", neural_mlp.evaluate(Xtr, Ytr, parameters))
     print("dev:  ", neural_mlp.evaluate(Xdev, Ydev, parameters))
     print("test: ", neural_mlp.evaluate(Xte, Yte, parameters))
+
+    # === SAMPLING ===
+    for _ in range(NUM_SAMPLES):
+        print(neural_mlp.sample(parameters, itos, CONTEXT_SIZE, rng))
+
 
 if __name__ == "__main__":
     main()
