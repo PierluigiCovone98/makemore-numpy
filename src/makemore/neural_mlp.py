@@ -56,7 +56,7 @@ def forward(X: np.ndarray, params: MLPParams) -> tuple[np.ndarray, np.ndarray, n
     return (probs, activations, concat_embeddings)
 
 
-def backward(alphabet_len: int, context_size: int, n_emb: int, Xtr: np.ndarray, Ytr: np.ndarray,
+def backward(alphabet_len: int, context_size: int, n_emb: int, X: np.ndarray, Y: np.ndarray,
             concat_embeddings: np.ndarray, W1: np.ndarray, W2: np.ndarray,  activations: np.ndarray,
             probs: np.ndarray,) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Run the full MLP backward pass; return the gradients ``(dC, dW1, db1, dW2, db2)``.
@@ -68,7 +68,7 @@ def backward(alphabet_len: int, context_size: int, n_emb: int, Xtr: np.ndarray, 
     """
     # Compute ``dlogits`` without compute ``dprobs`` first, 
     # as we've alredy seen for the nerual bigram model. 
-    dlogits = neural.d_loss_d_logits(probs, Ytr, alphabet_len) 
+    dlogits = neural.d_loss_d_logits(probs, Y, alphabet_len) 
     
     # Backward through the MLP layer2. 
     dW2 = neural.d_loss_d_w(activations, dlogits)
@@ -83,40 +83,53 @@ def backward(alphabet_len: int, context_size: int, n_emb: int, Xtr: np.ndarray, 
 
     # Backward through the MLP first layer.
     dembeddings = neural.unconcatenate_embs(dconcat, context_size, n_emb)
-    dC = neural.d_loss_d_C( dembeddings, Xtr, alphabet_len, n_emb )
+    dC = neural.d_loss_d_C( dembeddings, X, alphabet_len, n_emb )
 
     return (dC, dW1, db1, dW2, db2)
 
 
-def train( epochs: int, lr: float, alphabet_len: int, context_size: int, n_emb: int,
+def train( steps: int, lr: float, alphabet_len: int, context_size: int, n_emb: int, batch_size: int,
           Xtr: np.ndarray, Ytr: np.ndarray, 
-          params: MLPParams, log_every: int = 0 ) -> None:
-    """Train ``params`` in place by full-batch gradient descent.
+          params: MLPParams,rng: np.random.Generator,
+          log_every: int = 0) -> None:
+    """Train ``params`` in place by mini-batch gradient descent: each step takes 
+    ``batch size`` random examples from the training inputs vector.
 
     Each step runs forward, backward, and an in-place parameter update
     No gradient reset between steps: ``backward`` recomputes them from scratch,
     with no graph to clear. 
     
     If ``log_every > 0``, prints the loss every ``log_every`` steps.
+    Notice that the printed loss is the one of the batch:
+    this means that lossess between one step and another could have noise.
     """
-    if epochs <= 0:
-        raise ValueError("Epochs must be at least 1.")
+    if steps <= 0:
+        raise ValueError("Steps must be at least 1.")
 
-    for step in range(epochs):
+    len_Xtr = len(Xtr)
+
+    for step in range(steps):
         # No "zerograd()" required because there's no computational graph under the hood.
 
-        # === FORWARD ===
-        probs, activations, concat_embeddings = forward(Xtr, params)
+        # Choose ``batch_size`` number of indices between ``0`` and 
+        # the ``len of the training inputs vector``.
+        idx = rng.integers(0, len_Xtr, size=batch_size)
         
-        loss = neural.mean_nll(probs, Ytr)
+        # X batch , Y batch       
+        Xb, Yb = Xtr[idx], Ytr[idx]
+
+        # === FORWARD ===
+        probs, activations, concat_embeddings = forward(Xb, params)
+        
+        loss = neural.mean_nll(probs, Yb)
 
         # Logs
         if log_every > 0 and (
-            (step % log_every == 0) or (step == epochs-1) ):
-                print(f"step {step:>5d} / {epochs:<5d}: loss={loss:.8f}")
+            (step % log_every == 0) or (step == steps-1) ):
+                print(f"step {step:>5d} / {steps:<5d}: loss={loss:.8f}")
 
         # === Backward ===
-        dC, dW1, db1, dW2, db2 = backward(alphabet_len, context_size, n_emb, Xtr, Ytr,
+        dC, dW1, db1, dW2, db2 = backward(alphabet_len, context_size, n_emb, Xb, Yb,
                             concat_embeddings, params.W1, params.W2, activations, probs)
 
     

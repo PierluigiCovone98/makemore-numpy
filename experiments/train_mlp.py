@@ -25,25 +25,38 @@ HIDDEN_LAYER_OUTPUTS = 100
 # by Karpathy in its video (makemore part2), but this i
 # temporarily ``out of scopes``.
 LEARNING_RATE = 0.1
-EPOCHS = 500
+
+STEPS = 10000
+
+# Fractions of the raw dataset.
+TRAIN_FRAC = 0.8
+DEV_FRAC = 0.1
+
+BATCH_SIZE = 32
 
 
 def main():
 
-    # === Build the Dataset ===
+    rng = np.random.default_rng(SEED)
+
+    # === Build datasets ===
     raw_dataset = data.read_dataset(NAMES_PATH)
     stoi, itos = data.build_vocab(raw_dataset)
-    X, Y = data.build_dataset(raw_dataset, stoi, CONTEXT_SIZE)
+    splits = data.split_raw_dataset(raw_dataset, TRAIN_FRAC, DEV_FRAC, rng)
+
+
+    Xtr, Ytr = data.build_dataset(splits.raw_train_set, stoi, CONTEXT_SIZE)
+    Xdev, Ydev = data.build_dataset(splits.raw_dev_set, stoi, CONTEXT_SIZE)
+    Xte, Yte = data.build_dataset(splits.raw_test_set, stoi, CONTEXT_SIZE)
 
     alphabet_len = len(stoi)    # Vocabulary size: V
 
     # === Parameters Creation ===
-    rng = np.random.default_rng(SEED)
     parameters = neural_mlp.init_params(alphabet_len, N_EMB, CONTEXT_SIZE, HIDDEN_LAYER_OUTPUTS, rng)
 
     # === TRAINING LOOP ===
-    neural_mlp.train(EPOCHS, LEARNING_RATE, alphabet_len, CONTEXT_SIZE, N_EMB,
-                     X, Y, parameters, 10)
+    neural_mlp.train(STEPS, LEARNING_RATE, alphabet_len, CONTEXT_SIZE, N_EMB, BATCH_SIZE, 
+                     Xtr, Ytr, parameters, rng, 10)
 
     
 if __name__ == "__main__":
