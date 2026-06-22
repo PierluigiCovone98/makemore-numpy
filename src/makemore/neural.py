@@ -57,15 +57,15 @@ def concatenate_embs( embeddings: np.ndarray ) -> np.ndarray:
     return embeddings.reshape( embeddings.shape[0], embeddings.shape[1] * embeddings.shape[2] )
 
 
-def linear_forward( x: np.ndarray, W: np.ndarray ) -> np.ndarray:
-    """Linear layer forward pass: matrix-multiply the input ``x`` by the weights ``W``.
+def linear_forward( X: np.ndarray, W: np.ndarray ) -> np.ndarray:
+    """Linear layer forward pass: matrix-multiply the input ``X`` by the weights ``W``.
 
-    Generic over layers. ``x`` is whatever enters the layer in the forward pass; 
+    Generic over layers. ``X`` is whatever enters the layer in the forward pass; 
     each column of ``W`` is one neuron, so ``x @ W`` gives one output per neuron. 
     
     Bias, if any, is added by the caller.
     """
-    return x @ W
+    return X @ W
 
 
 def softmax( logits: np.ndarray ) -> np.ndarray:
@@ -86,21 +86,21 @@ def softmax( logits: np.ndarray ) -> np.ndarray:
     return counts / np.sum(counts, axis=1, keepdims=True)
 
 
-def mean_nll( probs: np.ndarray, ys: np.ndarray ) -> float:
+def mean_nll( probs: np.ndarray, Y: np.ndarray ) -> float:
     """Compute the mean negative log likelihood."""
-    return - np.mean( np.log( probs[ np.arange(ys.size), ys ] ) ).item()
+    return - np.mean( np.log( probs[ np.arange(Y.size), Y ] ) ).item()
 
 
 # === Derivatives methods ===
 
-def d_loss_d_logits( probs: np.ndarray, ys: np.ndarray, alphabet_len: int) -> np.ndarray:
-    """Compute d(loss)/d(logits) as (probs - onehot(ys)) / N.
+def d_loss_d_logits( probs: np.ndarray, Y: np.ndarray, alphabet_len: int) -> np.ndarray:
+    """Compute d(loss)/d(logits) as (probs - onehot(Y)) / N.
 
     The compact form left after composing d(loss)/d(probs) with the
     softmax Jacobian: "predicted - correct", scaled by the mean.
     """
-    yenc = data.one_hot(ys, alphabet_len)
-    N = len(ys)
+    yenc = data.one_hot(Y, alphabet_len)
+    N = len(Y)
     dlogits = (probs - yenc) / N
 
     return dlogits

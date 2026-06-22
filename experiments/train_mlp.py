@@ -26,7 +26,7 @@ HIDDEN_LAYER_OUTPUTS = 100
 # temporarily ``out of scopes``.
 LEARNING_RATE = 0.1
 
-STEPS = 10000
+STEPS = 30000
 
 # Fractions of the raw dataset.
 TRAIN_FRAC = 0.8
@@ -58,6 +58,10 @@ def main():
     neural_mlp.train(STEPS, LEARNING_RATE, alphabet_len, CONTEXT_SIZE, N_EMB, BATCH_SIZE, 
                      Xtr, Ytr, parameters, rng, 10)
 
+    # === EVALUATION ===
+    print("train:", neural_mlp.evaluate(Xtr, Ytr, parameters))
+    print("dev: :", neural_mlp.evaluate(Xdev, Ydev, parameters))
     
+
 if __name__ == "__main__":
     main()

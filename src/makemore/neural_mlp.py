@@ -139,3 +139,13 @@ def train( steps: int, lr: float, alphabet_len: int, context_size: int, n_emb: i
         params.b1 -= lr * db1
         params.W2 -= lr * dW2
         params.b2 -= lr * db2
+
+
+def evaluate(X: np.ndarray, Y: np.ndarray, params: MLPParams) -> float:
+    """Mean NLL loss of ``params`` on a dataset, without training.
+
+    One forward pass plus the loss, with no backward and no update,
+    so the parameters are left untouched.
+    """
+    probs, _, _ = forward(X, params)
+    return neural.mean_nll(probs, Y)
