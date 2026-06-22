@@ -60,8 +60,8 @@ def main():
 
     # === EVALUATION ===
     print("train:", neural_mlp.evaluate(Xtr, Ytr, parameters))
-    print("dev: :", neural_mlp.evaluate(Xdev, Ydev, parameters))
-    
+    print("dev:  ", neural_mlp.evaluate(Xdev, Ydev, parameters))
+    print("test: ", neural_mlp.evaluate(Xte, Yte, parameters))
 
 if __name__ == "__main__":
     main()
