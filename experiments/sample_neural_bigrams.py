@@ -47,7 +47,7 @@ def main():
     P = neural.softmax(W)
 
     for _ in range(N_SAMPLES):
-        print(data.sample(P, itos, rng))
+        print(neural_bigram.sample(P, itos, rng))
 
 if __name__ == "__main__":
     main()

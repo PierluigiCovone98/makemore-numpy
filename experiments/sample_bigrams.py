@@ -28,7 +28,7 @@ def main():
     # 5. Sample names from P, using a single rng seeded once for reproducibility.
     rng = np.random.default_rng(SEED)
     for _ in range(NUM_SAMPLES):
-        print(data.sample(P, itos, rng))
+        print(counting.sample(P, itos, rng))
 
 
 if __name__ == "__main__":

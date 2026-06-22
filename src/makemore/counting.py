@@ -53,6 +53,47 @@ def mean_nll( dataset: list[str], stoi: data.StrToInt, P: np.ndarray ) -> float:
     return nll/n_bigrams
 
 
+def sample( probs: np.ndarray, itos: data.IntToStr, rng: np.random.Generator ) -> str:
+    """Generate one string by autoregressive sampling from the counting model.
+
+    ``probs[i]`` is the distribution over the next character given the previous
+    character ``i``; ``probs`` has shape (V, V), here from normalized bigram
+    frequencies. Sampling starts from the boundary token (index 0) and stops as
+    soon as it is drawn again.
+
+    Intentionally duplicated in ``neural_bigram.sample``: same (V, V) shape, but
+    the two models are independent and may diverge.
+    """
+    out: list[str] = []
+
+    i: int = 0
+    while True:
+        # Using "multinomial" because we want to get a character following 
+        # the probability distribution of the i-th row.
+        # 
+        # Notice that the "rng.multinomial()" function returns an array
+        # that has the same dimension of the given "pvals", and each dimension
+        # has the same size of the original one.
+        #
+        # What "multinomial" does is:
+        #   Ok, you specify how many time you want me to perform the experiment
+        #   (exactly n-times) and I will tell you how frequent each result occurs.
+        # How frequent results occur shuld roughly match the given distribution of
+        # probabilities. 
+        #
+        # Because we're interested in one repetition of the experiment (n=1),
+        # we need a way to "extract" the only outcome that occurred. 
+        # To do that, we use "np.argmax()".
+        j = np.argmax( rng.multinomial(n=1, pvals=probs[i]) ).item() 
+        
+        # If the next character is the boundary token, then return (without add it)
+        if j == 0:
+            return ''.join(out)
+
+        out.append( itos[j] )
+        i = j
+
+
 # === RENDERING ===
 def save_bigrams_matrix_plot( N: np.ndarray, itos: data.IntToStr, output_path: Path ) -> None:
     """Render the bigram count matrix as a heatmap."""
