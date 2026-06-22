@@ -20,6 +20,10 @@ N_EMB = 2
 
 HIDDEN_LAYER_OUTPUTS = 100
 
+# The ``LEARNING_RATE`` hyperparameter is roughly choosen;
+# there could be used the same "optimization" approach used
+# by Karpathy in its video (makemore part2), but this i
+# temporarily ``out of scopes``.
 LEARNING_RATE = 0.1
 EPOCHS = 500
 

@@ -7,6 +7,7 @@ Functions implemented here are used by more than one single approach (by the cou
 and the neural models).
 """
 from pathlib import Path
+from dataclasses import dataclass
 from collections.abc import Iterator
 
 import numpy as np
@@ -55,6 +56,48 @@ def build_vocab( dataset: list[str] ) -> tuple[StrToInt, IntToStr]:
     itos[0] = BOUNDARY_TOKEN
     
     return (stoi, itos)
+
+@dataclass
+class SplittedRawDataset:
+    # Optimize parameters of the model (using gradient descent).
+    raw_train_set: list[str]
+    
+    # Train hyperparameters of the model.
+    raw_dev_set: list[str]
+    
+    # Evaluate the performance of the model at the end (only few times).
+    raw_test_set: list[str]
+
+
+def split_raw_dataset( raw_dataset: list[str],
+                       train_frac: float, dev_frac: float,
+                       rng: np.random.Generator) -> SplittedRawDataset:
+    """Partition the words dataset into train / dev / test sets.
+
+    The words are shuffled first -- so the three sets share the same
+    distribution regardless of any order in the source -- then cut at cumulative
+    boundaries: ``train_frac`` of the words go to train, ``dev_frac`` to dev, and
+    the remainder to test (so the test fraction is whatever the first two leave.
+
+    The split is on *words*, before ``build_dataset``, so every example of a
+    given word stays in a single set (no leakage across the split). ``rng`` makes
+    the shuffle reproducible.
+    """
+    rng.shuffle(raw_dataset)
+
+    # Partitioning
+    len_raw_dataset = len(raw_dataset)
+
+    upper_idx_tr = int(train_frac*len_raw_dataset)
+    upper_idx_dev = upper_idx_tr + int(dev_frac*len_raw_dataset)
+
+    raw_train_set = raw_dataset[:upper_idx_tr]
+    raw_dev_set = raw_dataset[upper_idx_tr:upper_idx_dev]
+    raw_test_set = raw_dataset[upper_idx_dev:]
+    
+    return SplittedRawDataset(raw_train_set= raw_train_set,
+                           raw_dev_set= raw_dev_set,
+                            raw_test_set= raw_test_set)
 
 
 def iter_bigrams( dataset: list[str], stoi: StrToInt ) -> Iterator[ tuple[int, int] ]:
