@@ -85,6 +85,7 @@ python experiments/sample_bigrams.py            # sample from counting
 python experiments/compute_loss_bigrams.py      # reference loss (~2.4546)
 python experiments/train_neural_bigram.py       # train the neural model
 python experiments/sample_neural_bigrams.py     # train then sample from neural
+python experiments/train_mlp.py                 # train then sample the MLP model
 ```
 
 The full test suite (gradient checks for the hand-written backward) runs
@@ -97,5 +98,5 @@ pytest
 ## Roadmap
 
 1. **Bigram** ✓ — counting and neural approaches both implemented.
-2. **MLP** — one hidden layer with `tanh`, embeddings.
+2. **MLP** ✓ — one hidden layer with `tanh`, embeddings.
 3. **RNN** — recurrence and backpropagation through time.
