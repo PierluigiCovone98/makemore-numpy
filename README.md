@@ -29,7 +29,7 @@ single previous one — is solved twice, with two approaches:
   dataset is small enough that the network is re-trained from scratch every
   time the experiment is run (no checkpointing).
 
-Both converge to a loss of about 2.45 on the same dataset, and produce the
+Both converge to a loss of about **2.45** on the same dataset, and produce the
 same kind of nonsense output. They are the same model reached two different
 ways: one written down by hand, one learned. The neural version adds no
 power on this problem — but it opens a door the counting model can't walk
@@ -44,7 +44,7 @@ character; and between input and output it adds a hidden layer with a
 `tanh` non-linearity.
 
 Its forward and backward passes are written by hand.
-It is trained by mini-batch gradient descent over a proper train (80%)/ dev (10%) / test (10%) split, and then it is measured with a separate evaluation pass.
+It is trained by mini-batch gradient descent over a proper train (80%) / dev (10%) / test (10%) split, and then it is measured with a separate evaluation pass.
 
 On the names dataset it reaches about **2.36** train / **2.59** dev loss,
 and its samples (`ken`, `man`, `dari`, `myn`, ...) are visibly more
