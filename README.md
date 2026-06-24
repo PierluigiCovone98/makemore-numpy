@@ -15,50 +15,64 @@ verifying it against numerical differentiation. The point is to
 understand what's under the hood in modern frameworks, using toy
 examples.
 
-## Two approaches, same task
+## The bigram, two ways
 
-The same "next-character prediction problem" is solved twice, with two approaches:
+The simplest version of the task — predict the next character from the
+single previous one — is solved twice, with two approaches:
 
 - **Counting model** (`src/makemore/counting.py`): builds the bigram
-  transition matrix directly from frequencies,
-  then samples from it. No learning involved.
-- **Neural model** (`src/makemore/neural_bigram.py`): a single linear layer
-  followed by softmax and mean negative log-likelihood. The weights are
-  initialized randomly and trained by full-batch gradient descent. The
-  dataset is small enough that the network is re-trained from scratch
-  every time the experiment is run (no checkpointing).
+  transition matrix directly from frequencies, then samples from it. No
+  learning involved.
+- **Neural bigram** (`src/makemore/neural_bigram.py`): a single linear
+  layer followed by softmax and mean negative log-likelihood. The weights
+  are initialized randomly and trained by full-batch gradient descent. The
+  dataset is small enough that the network is re-trained from scratch every
+  time the experiment is run (no checkpointing).
 
-Both converge to a loss of about 2.45 on the same dataset, and produce
-the same kind of nonsense outputs. They are the same model, reached two
-different ways: one written down by hand, one learned. The neural
-approach adds no power on this problem — but it opens a door the
-counting model can't walk through, because learning scales to deeper networks. 
-Those are the ones explored in the next steps of the roadmap
+Both converge to a loss of about 2.45 on the same dataset, and produce the
+same kind of nonsense output. They are the same model reached two different
+ways: one written down by hand, one learned. The neural version adds no
+power on this problem — but it opens a door the counting model can't walk
+through, because learning is what scales to deeper networks.
+
+## The MLP
+
+Instead of looking at a single previous
+character, it conditions on a window of `context_size` of them; instead of
+a one-hot encoding, it learns a low-dimensional **embedding** for each
+character; and between input and output it adds a hidden layer with a
+`tanh` non-linearity.
+
+Its forward and backward passes are written by hand.
+It is trained by mini-batch gradient descent over a proper train (80%)/ dev (10%) / test (10%) split, and then it is measured with a separate evaluation pass.
+
+On the names dataset it reaches about **2.36** train / **2.59** dev loss,
+and its samples (`ken`, `man`, `dari`, `myn`, ...) are visibly more
+name-like than the bigram's.
 
 ## Code organization
- 
-The library separates **shared primitives** from **model-specific
-wiring**, so each model reuses the same building blocks without
-inheriting another model's assumptions:
- 
+
+The library separates **shared primitives** from **model-specific wiring**,
+so each model reuses the same building blocks without inheriting another
+model's assumptions. The general-purpose modules are:
+
 - `src/makemore/data.py` — dataset loading, vocabulary, dataset
-  construction, and one-hot encoding. Shared by every approach.
-- `src/makemore/neural.py` — architecture-agnostic neural primitives:
-  layer and bias initialization, the embedding lookup, the linear
-  forward, softmax, mean NLL, and the generic gradient pieces
-  (`d_loss_d_logits`, `d_loss_d_w`). Used by more than one model.
-- `src/makemore/neural_bigram.py` — the neural bigram model: its
-  backward pass and training loop, built on the primitives above.
-- `src/makemore/counting.py` — the counting model.
-Keeping the primitives separate is what lets the MLP (next on the
-roadmap) reuse the forward and gradient building blocks while writing
-its own, separate backward assembly.
+  construction, the train / dev / test split, and one-hot encoding. Shared
+  by every model.
+- `src/makemore/neural.py` — architecture-agnostic neural primitives: layer
+  and bias initialization, the embedding lookup, embedding concatenation,
+  the linear forward, softmax, mean NLL, and the generic gradient pieces
+  (`d_loss_d_logits`, `d_loss_d_w`, `d_loss_d_x`, `d_loss_d_b`, the `tanh`
+  backward, the embedding-table backward). Used by more than one model.
+
+Each model then lives in its own module and supplies only what is specific
+to it.
 
 ## Documentation
 
 The full derivation of the backward pass for the **neural bigram** model —
 from the loss down to the weights — is in
-[`docs/backpropagation_by_hand.pdf`](docs/backpropagation_by_hand.pdf)
+[`docs/backpropagation_by_hand.pdf`](docs/backpropagation_by_hand.pdf).
 
 ## Setup
 
@@ -85,7 +99,7 @@ python experiments/sample_bigrams.py            # sample from counting
 python experiments/compute_loss_bigrams.py      # reference loss (~2.4546)
 python experiments/train_neural_bigram.py       # train the neural model
 python experiments/sample_neural_bigrams.py     # train then sample from neural
-python experiments/train_mlp.py                 # train then sample the MLP model
+python experiments/train_mlp.py                 # train, evaluate, and sample the MLP
 ```
 
 The full test suite (gradient checks for the hand-written backward) runs
@@ -98,5 +112,4 @@ pytest
 ## Roadmap
 
 1. **Bigram** ✓ — counting and neural approaches both implemented.
-2. **MLP** ✓ — one hidden layer with `tanh`, embeddings.
-3. **RNN** — recurrence and backpropagation through time.
+2. **MLP** ✓ — embeddings, one hidden layer with `tanh`, multi-character context.

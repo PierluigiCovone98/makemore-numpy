@@ -98,9 +98,9 @@ def split_raw_dataset( raw_dataset: list[str],
     upper_idx_tr = int(train_frac*len_raw_dataset)
     upper_idx_dev = upper_idx_tr + int(dev_frac*len_raw_dataset)
 
-    raw_train_set = raw_dataset[:upper_idx_tr]
-    raw_dev_set = raw_dataset[upper_idx_tr:upper_idx_dev]
-    raw_test_set = raw_dataset[upper_idx_dev:]
+    raw_train_set = raw_dataset_copy[:upper_idx_tr]
+    raw_dev_set = raw_dataset_copy[upper_idx_tr:upper_idx_dev]
+    raw_test_set = raw_dataset_copy[upper_idx_dev:]
     
     return SplitRawDataset(raw_train_set= raw_train_set,
                            raw_dev_set= raw_dev_set,
