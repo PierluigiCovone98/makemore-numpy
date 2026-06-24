@@ -37,18 +37,21 @@ through, because learning is what scales to deeper networks.
 
 ## The MLP
 
-Instead of looking at a single previous
-character, it conditions on a window of `context_size` of them; instead of
-a one-hot encoding, it learns a low-dimensional **embedding** for each
-character; and between input and output it adds a hidden layer with a
+Instead of looking at a single previous character, it conditions on a window of `context_size` of them; instead of a one-hot encoding, it learns a low-dimensional **embedding** for each
+character; and, between input and output it adds a hidden layer with a
 `tanh` non-linearity.
-
-Its forward and backward passes are written by hand.
-It is trained by mini-batch gradient descent over a proper train (80%) / dev (10%) / test (10%) split, and then it is measured with a separate evaluation pass.
-
-On the names dataset it reaches about **2.36** train / **2.59** dev loss,
-and its samples (`ken`, `man`, `dari`, `myn`, ...) are visibly more
-name-like than the bigram's.
+ 
+Its forward and backward passes are written by hand and then validated against numerical differentiation. 
+It is trained by mini-batch gradient descent over a proper train (80%) / dev (10%) / test (10%) split; it is then measured with a separate evaluation pass.
+ 
+On the names dataset it reaches about **2.42** loss, essentially the same
+across train, dev, and test — a sign the split is honest and there is no
+real overfitting. The samples (`diah`, `emana`, `maige`, `kuto`, ...) are
+recognizably name-shaped but still rough, often trailing off without
+closing cleanly. That roughness is the limit of a deliberately tiny model
+(`context_size=3`, `n_emb=2`): it is exactly the point where the
+optimizations we left out — larger embeddings, a longer context, scaled
+initialization, learning-rate tuning — would start to earn their keep.
 
 ## Code organization
 
